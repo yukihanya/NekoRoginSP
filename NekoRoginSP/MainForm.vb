@@ -611,10 +611,12 @@ Public Class MainForm
 
         If index = -1 Then Exit Sub
 
-        If MessageBox.Show($"ガンホーID[{List_Account.SelectedItem.ToString()}]を削除しますにゃ？", "", MessageBoxButtons.YesNo) <> DialogResult.OK Then Exit Sub
+        If MessageBox.Show($"ガンホーID[{List_Account.SelectedItem.ToString()}]を削除しますにゃ？", "", MessageBoxButtons.YesNo) <> DialogResult.Yes Then Exit Sub
 
         List_Account.Items.Remove(index)
         loginAccounts.RemoveAt(index)
+
+        List_Account.SelectedIndex = -1
 
     End Sub
 

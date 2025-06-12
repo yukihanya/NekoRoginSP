@@ -92,7 +92,7 @@ Public Module AccountSaveData
 
     Public Function LoadAccountsFromXml(filePath As String) As List(Of Account)
         If Not File.Exists(filePath) Then
-            MessageBox.Show($"エラー : ファイルが見つからなかったにゃ!!{vbCrLf}{filePath}")
+            'MessageBox.Show($"エラー : ファイルが見つからなかったにゃ!!{vbCrLf}{filePath}")
             Return New List(Of Account)() ' 空リストを返すにゃ
         End If
 
@@ -134,7 +134,7 @@ Public Module AccountSaveData
 
     Public Function LoadEncryptedXmlBase64(filePath As String, password As String) As List(Of Account)
         If Not File.Exists(filePath) Then
-            Console.WriteLine($"エラー : ファイルがにゃいにゃ!! : {filePath}")
+            MessageBox.Show($"エラー : ファイルがにゃいにゃ!! : {filePath}")
             Return New List(Of Account)()
         End If
 
@@ -158,7 +158,7 @@ Public Module AccountSaveData
                 Return loaded.Accounts
             End Using
         Catch ex As Exception
-            Console.WriteLine($"エラー : 読み込みエラーにゃ : {ex.Message}")
+            MessageBox.Show($"エラー : 読み込みエラーにゃ : {ex.Message}")
             Return New List(Of Account)()
         End Try
     End Function
