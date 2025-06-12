@@ -5,7 +5,7 @@ Imports Microsoft.Win32
 
 Module NekoHelper
     ' ヘルパー関数
-    Public Class Base64EncodeUtil
+    Public Class Base64EncodeHelper
 
         ' Base64エンコード関数にゃ
         Public Shared Function Base64Encode(input As String) As String
@@ -21,7 +21,7 @@ Module NekoHelper
 
     End Class
 
-    Public Class UrlEncodeUtil
+    Public Class UrlEncodeHelper
 
         ' URLエンコードを実装するにゃ
         Public Shared Function UrlEncodeSjis(ByVal input As String) As String
@@ -65,7 +65,7 @@ Module NekoHelper
     End Class
 
 
-    Public Class HtmlParserUtil
+    Public Class HtmlParserHelper
 
 
         ' HTMLから特定のタグの属性値を取得するにゃ
@@ -103,7 +103,7 @@ Module NekoHelper
     End Class
 
 
-    Public Class UrlParserUtil
+    Public Class UrlParserHelper
 
         ' URLからベースURLを取得するにゃ
         Public Shared Function GetBaseDirUrl(ByVal fullUrl As String) As String
@@ -137,7 +137,7 @@ Module NekoHelper
     End Class
 
 
-    Public Class Win32Util
+    Public Class Win32Helper
 
         ' レジストリの既定値を取得するにゃ
         Public Shared Function GetRegistryValue(fullPath As String, valueName As String) As String
@@ -161,7 +161,7 @@ Module NekoHelper
                 rootKeyStr = "HKEY_CURRENT_CONFIG"
                 subKeyPath = fullPath.Substring("HKEY_CURRENT_CONFIG\".Length)
             Else
-                MessageBox.Show("不明なルートキーにゃ: " & fullPath)
+                MessageBox.Show($"不明なルートキーにゃ : {fullPath}")
                 Return Nothing
             End If
 

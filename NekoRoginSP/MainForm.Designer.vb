@@ -89,6 +89,7 @@ Partial Class MainForm
         '
         'Button_Play
         '
+        Me.Button_Play.Enabled = False
         Me.Button_Play.Font = New System.Drawing.Font("ＭＳ ゴシック", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(128, Byte))
         Me.Button_Play.Location = New System.Drawing.Point(264, 41)
         Me.Button_Play.Name = "Button_Play"
@@ -99,6 +100,7 @@ Partial Class MainForm
         '
         'Button_Info
         '
+        Me.Button_Info.Enabled = False
         Me.Button_Info.Font = New System.Drawing.Font("ＭＳ ゴシック", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(128, Byte))
         Me.Button_Info.Location = New System.Drawing.Point(264, 70)
         Me.Button_Info.Name = "Button_Info"
@@ -123,7 +125,7 @@ Partial Class MainForm
         '
         Me.MenuOption.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.MenuOption_Setup, Me.MenuOption_Shell, Me.MenuOption_MinimizeToTray, Me.ToolStripSeparator2, Me.MenuOption_About, Me.ToolStripSeparator3, Me.MenuOption_Quit})
         Me.MenuOption.Name = "MenuOption"
-        Me.MenuOption.Size = New System.Drawing.Size(237, 158)
+        Me.MenuOption.Size = New System.Drawing.Size(237, 136)
         Me.MenuOption.Tag = ""
         '
         'MenuOption_Setup
@@ -238,6 +240,7 @@ Partial Class MainForm
         '
         'MenuAccount_Remove
         '
+        Me.MenuAccount_Remove.Enabled = False
         Me.MenuAccount_Remove.Name = "MenuAccount_Remove"
         Me.MenuAccount_Remove.Size = New System.Drawing.Size(161, 22)
         Me.MenuAccount_Remove.Text = "ガンホーID削除"
