@@ -11,34 +11,3 @@
 Option Strict On
 Option Explicit On
 
-
-Namespace My
-    
-    'メモ:このファイルは自動生成されました。直接変更しないでください。変更したり、
-    ' ビルド エラーが発生した場合は、プロジェクト デザイナー へ移動し (プロジェクト
-    ' プロパティに移動するか、またはソリューション エクスプローラーのマイ プロジェクト
-    ' ノード上でダブルクリック)、アプリケーション タブ上で変更を行います。
-    '
-    Partial Friend Class MyApplication
-        
-        <Global.System.Diagnostics.DebuggerStepThroughAttribute()>  _
-        Public Sub New()
-            MyBase.New(Global.Microsoft.VisualBasic.ApplicationServices.AuthenticationMode.Windows)
-            Me.IsSingleInstance = false
-            Me.EnableVisualStyles = true
-            Me.SaveMySettingsOnExit = true
-            Me.ShutDownStyle = Global.Microsoft.VisualBasic.ApplicationServices.ShutdownMode.AfterMainFormCloses
-        End Sub
-        
-        <Global.System.Diagnostics.DebuggerStepThroughAttribute()>  _
-        Protected Overrides Sub OnCreateMainForm()
-            Me.MainForm = Global.NekoRoginSP.MainForm
-        End Sub
-        
-        <Global.System.Diagnostics.DebuggerStepThroughAttribute()>  _
-        Protected Overrides Function OnInitialize(ByVal commandLineArgs As System.Collections.ObjectModel.ReadOnlyCollection(Of String)) As Boolean
-            Me.MinimumSplashScreenDisplayTime = 0
-            Return MyBase.OnInitialize(commandLineArgs)
-        End Function
-    End Class
-End Namespace

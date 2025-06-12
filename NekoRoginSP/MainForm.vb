@@ -1,16 +1,43 @@
 ﻿Imports System.ComponentModel
 Imports System.IO
 Imports System.Net.Http
-Imports System.Reflection
+Imports System.Net.Security
 Imports System.Text
 Imports System.Text.RegularExpressions
-Imports NekoRoginSP.AccountSaveData
+Imports System.Threading
+
+Module Program
+    <STAThread()>
+    Sub Main()
+        Dim mutex As Mutex
+        Dim createdNew As Boolean
+
+        ' アプリ名などのユニークな名前を指定（必ずアプリごとに変えてにゃ）
+        mutex = New Mutex(True, "NekoRoginSP_Mutex", createdNew)
+
+        If Not createdNew Then
+            ' すでに起動している場合
+            MessageBox.Show("すでにアプリが起動していますにゃ！", "多重起動防止", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            Return
+        End If
+
+        ' アプリの通常起動処理
+        Application.EnableVisualStyles()
+        Application.SetCompatibleTextRenderingDefault(False)
+        Application.Run(New MainForm())
+
+        ' 終了時にmutexを解放
+        mutex.ReleaseMutex()
+    End Sub
+End Module
+
 
 Public Class MainForm
 
     Private Const URL_LOGIN As String = "https://member.gungho.jp/front/member/center.aspx"
     Private Const URL_GAMECODE As String = "https://member.gungho.jp/front/member/webgs/rocenter_old.aspx"
-    Private Const URL_RO_TOOL As String = "https://member.gungho.jp/front/ro/guest/login.aspx?ReturnUrl=https://ragnarokonline.gungho.jp/tool/"
+    Private Const URL_RO_LOGIN As String = "https://member.gungho.jp/front/ro/guest/login.aspx"
+    Private Const URL_RO_TOOL As String = "https://ragnarokonline.gungho.jp/tool/"
     Private Const URL_RO_CHARACTER As String = "https://member.gungho.jp/front/member/sns/ro.aspx"
     Private Const URL_RO_QUEST As String = "https://member.gungho.jp/front/member/sns/ro_quest.aspx"
 
@@ -29,6 +56,7 @@ Public Class MainForm
     Private httpClient As New HttpClientHelper()
     Public tempOtp As String
 
+
     Private Async Function Login() As Task(Of Integer)
 
         Dim html As String
@@ -46,7 +74,7 @@ Public Class MainForm
 
         account.Cookie.Remove("goessosst")
 
-        httpClient.SetCookies(UrlParserUtil.GetBaseDomainUrl(URL_LOGIN), account.Cookie)
+        httpClient.SetCookies(UrlParserHelper.GetBaseDomainUrl(URL_LOGIN), account.Cookie)
 
         ' 一定数のページ切り替えがある時はログイン不能と見なして接続試行ループを抜けるにゃ
         For i As Integer = 0 To 9
@@ -100,16 +128,16 @@ Public Class MainForm
                     parameter("__LASTFOCUS") = ""
                     parameter("__EVENTTARGET") = ""
                     parameter("__EVENTARGUMENT") = ""
-                    parameter("__VIEWSTATE") = HtmlParserUtil.GetHtmlValue(html, "input", "name", "__VIEWSTATE", "value")
-                    parameter("__VIEWSTATEGENERATOR") = HtmlParserUtil.GetHtmlValue(html, "input", "name", "__VIEWSTATEGENERATOR", "value")
+                    parameter("__VIEWSTATE") = HtmlParserHelper.GetHtmlValue(html, "input", "name", "__VIEWSTATE", "value")
+                    parameter("__VIEWSTATEGENERATOR") = HtmlParserHelper.GetHtmlValue(html, "input", "name", "__VIEWSTATEGENERATOR", "value")
                     parameter("ctl00$ctl00$MainContent$TopContent$chbSave") = "on"
                     parameter("ctl00$ctl00$MainContent$TopContent$txt") = ""
                     parameter("ctl00$ctl00$MainContent$TopContent$ibtNext.x") = "0"
                     parameter("ctl00$ctl00$MainContent$TopContent$ibtNext.y") = "0"
 
-                    nextUrl = UrlParserUtil.GetBaseDirUrl(httpClient.GetLastUrl()) & HtmlParserUtil.GetHtmlValue(html, "form", "id", "sitemaster", "action")
+                    nextUrl = UrlParserHelper.GetBaseDirUrl(httpClient.GetLastUrl()) & HtmlParserHelper.GetHtmlValue(html, "form", "id", "sitemaster", "action")
 
-                    Dim imageUrl = UrlParserUtil.GetBaseDomainUrl(httpClient.GetLastUrl()) & HtmlParserUtil.GetHtmlValue(html, "img", "alt", "ひらがな認証", "src")
+                    Dim imageUrl = UrlParserHelper.GetBaseDomainUrl(httpClient.GetLastUrl()) & HtmlParserHelper.GetHtmlValue(html, "img", "alt", "ひらがな認証", "src")
                     Dim captchaImage As Image
 
                     Try
@@ -131,22 +159,22 @@ Public Class MainForm
                         If .ShowDialog() <> DialogResult.OK Then Return 0
                     End With
 
-                    parameter("ctl00$ctl00$MainContent$TopContent$captchaControlAjax$txtCaptcha") = UrlEncodeUtil.UrlEncodeSjis(tempOtp)
+                    parameter("ctl00$ctl00$MainContent$TopContent$captchaControlAjax$txtCaptcha") = UrlEncodeHelper.UrlEncodeSjis(tempOtp)
 
                 Case html.Contains("ログイン画像認証")
                     parameter("__LASTFOCUS") = ""
                     parameter("__EVENTTARGET") = ""
                     parameter("__EVENTARGUMENT") = ""
-                    parameter("__VIEWSTATE") = HtmlParserUtil.GetHtmlValue(html, "input", "name", "__VIEWSTATE", "value")
-                    parameter("__VIEWSTATEGENERATOR") = HtmlParserUtil.GetHtmlValue(html, "input", "name", "__VIEWSTATEGENERATOR", "value")
+                    parameter("__VIEWSTATE") = HtmlParserHelper.GetHtmlValue(html, "input", "name", "__VIEWSTATE", "value")
+                    parameter("__VIEWSTATEGENERATOR") = HtmlParserHelper.GetHtmlValue(html, "input", "name", "__VIEWSTATEGENERATOR", "value")
                     parameter("ctl00$ctl00$MainContent$TopContent$chbSave") = "on"
                     parameter("ctl00$ctl00$MainContent$TopContent$txt") = ""
                     parameter("ctl00$ctl00$MainContent$TopContent$ibtNext.x") = "0"
                     parameter("ctl00$ctl00$MainContent$TopContent$ibtNext.y") = "0"
 
-                    nextUrl = UrlParserUtil.GetBaseDirUrl(httpClient.GetLastUrl()) & HtmlParserUtil.GetHtmlValue(html, "form", "id", "sitemaster", "action")
+                    nextUrl = UrlParserHelper.GetBaseDirUrl(httpClient.GetLastUrl()) & HtmlParserHelper.GetHtmlValue(html, "form", "id", "sitemaster", "action")
 
-                    Dim imageUrl = UrlParserUtil.GetBaseDomainUrl(httpClient.GetLastUrl()) & HtmlParserUtil.GetHtmlValue(html, "img", "alt", "ひらがな認証", "src")
+                    Dim imageUrl = UrlParserHelper.GetBaseDomainUrl(httpClient.GetLastUrl()) & HtmlParserHelper.GetHtmlValue(html, "img", "alt", "ひらがな認証", "src")
                     Dim captchaImage As Image
 
                     Try
@@ -163,7 +191,7 @@ Public Class MainForm
                         If .ShowDialog() <> DialogResult.OK Then Return 0
                     End With
 
-                    parameter("ctl00$ctl00$MainContent$TopContent$captchaControlAjax$txtCaptcha") = UrlEncodeUtil.UrlEncodeSjis(tempOtp)
+                    parameter("ctl00$ctl00$MainContent$TopContent$captchaControlAjax$txtCaptcha") = UrlEncodeHelper.UrlEncodeSjis(tempOtp)
 
 
             ' ワンタイムパスワード
@@ -171,13 +199,13 @@ Public Class MainForm
                     parameter("__LASTFOCUS") = ""
                     parameter("__EVENTTARGET") = ""
                     parameter("__EVENTARGUMENT") = ""
-                    parameter("__VIEWSTATE") = HtmlParserUtil.GetHtmlValue(html, "input", "name", "__VIEWSTATE", "value")
-                    parameter("__VIEWSTATEGENERATOR") = HtmlParserUtil.GetHtmlValue(html, "input", "name", "__VIEWSTATEGENERATOR", "value")
+                    parameter("__VIEWSTATE") = HtmlParserHelper.GetHtmlValue(html, "input", "name", "__VIEWSTATE", "value")
+                    parameter("__VIEWSTATEGENERATOR") = HtmlParserHelper.GetHtmlValue(html, "input", "name", "__VIEWSTATEGENERATOR", "value")
                     parameter("ctl00$MainContent$loginNameControl$txtLoginName") = account.Id
                     parameter("ctl00$MainContent$passwordControl$txtPassword") = account.Passwd
                     parameter("ctl00$MainContent$btNext1") = ""
 
-                    nextUrl = UrlParserUtil.GetBaseDirUrl(httpClient.GetLastUrl()) & HtmlParserUtil.GetHtmlValue(html, "form", "id", "sitemaster", "action")
+                    nextUrl = UrlParserHelper.GetBaseDirUrl(httpClient.GetLastUrl()) & HtmlParserHelper.GetHtmlValue(html, "form", "id", "sitemaster", "action")
 
 
                     With New AuthForm() With {.Left = Me.Left, .Top = Me.Top, .Text = "ワンタイムパスワード"}
@@ -196,13 +224,13 @@ Public Class MainForm
                     parameter("__LASTFOCUS") = ""
                     parameter("__EVENTTARGET") = ""
                     parameter("__EVENTARGUMENT") = ""
-                    parameter("__VIEWSTATE") = HtmlParserUtil.GetHtmlValue(html, "input", "name", "__VIEWSTATE", "value")
-                    parameter("__VIEWSTATEGENERATOR") = HtmlParserUtil.GetHtmlValue(html, "input", "name", "__VIEWSTATEGENERATOR", "value")
+                    parameter("__VIEWSTATE") = HtmlParserHelper.GetHtmlValue(html, "input", "name", "__VIEWSTATE", "value")
+                    parameter("__VIEWSTATEGENERATOR") = HtmlParserHelper.GetHtmlValue(html, "input", "name", "__VIEWSTATEGENERATOR", "value")
                     parameter("ctl00$MainContent$loginNameControl$txtLoginName") = account.Id
                     parameter("ctl00$MainContent$passwordControl$txtPassword") = account.Passwd
                     parameter("ctl00$MainContent$btNext1") = ""
 
-                    nextUrl = UrlParserUtil.GetBaseDirUrl(httpClient.GetLastUrl()) & HtmlParserUtil.GetHtmlValue(html, "form", "id", "sitemaster", "action")
+                    nextUrl = UrlParserHelper.GetBaseDirUrl(httpClient.GetLastUrl()) & HtmlParserHelper.GetHtmlValue(html, "form", "id", "sitemaster", "action")
 
 
                     With New AuthForm() With {.Left = Me.Left, .Top = Me.Top, .Text = "ワンタイムパスワード"}
@@ -220,14 +248,14 @@ Public Class MainForm
                     parameter("__LASTFOCUS") = ""
                     parameter("__EVENTTARGET") = ""
                     parameter("__EVENTARGUMENT") = ""
-                    parameter("__VIEWSTATE") = HtmlParserUtil.GetHtmlValue(html, "input", "name", "__VIEWSTATE", "value")
-                    parameter("__VIEWSTATEGENERATOR") = HtmlParserUtil.GetHtmlValue(html, "input", "name", "__VIEWSTATEGENERATOR", "value")
+                    parameter("__VIEWSTATE") = HtmlParserHelper.GetHtmlValue(html, "input", "name", "__VIEWSTATE", "value")
+                    parameter("__VIEWSTATEGENERATOR") = HtmlParserHelper.GetHtmlValue(html, "input", "name", "__VIEWSTATEGENERATOR", "value")
                     parameter("ctl00$MainContent$loginNameControl$txtLoginName") = account.Id
                     parameter("ctl00$MainContent$passwordControl$txtPassword") = account.Passwd
                     parameter("ctl00$MainContent$OTPControl$inputOTP") = ""
                     parameter("ctl00$MainContent$btNext1") = ""
 
-                    nextUrl = UrlParserUtil.GetBaseDirUrl(httpClient.GetLastUrl()) & HtmlParserUtil.GetHtmlValue(html, "form", "id", "sitemaster", "action")
+                    nextUrl = UrlParserHelper.GetBaseDirUrl(httpClient.GetLastUrl()) & HtmlParserHelper.GetHtmlValue(html, "form", "id", "sitemaster", "action")
 
                     Clipboard.SetText(html)
                     For Each kvp As KeyValuePair(Of String, String) In parameter
@@ -239,12 +267,12 @@ Public Class MainForm
             ' 電話認証
                 Case html.Contains("STEP1")
 
-                    parameter("__VIEWSTATE") = HtmlParserUtil.GetHtmlValue(html, "input", "name", "__VIEWSTATE", "value")
-                    parameter("__VIEWSTATEGENERATOR") = HtmlParserUtil.GetHtmlValue(html, "input", "name", "__VIEWSTATEGENERATOR", "value")
+                    parameter("__VIEWSTATE") = HtmlParserHelper.GetHtmlValue(html, "input", "name", "__VIEWSTATE", "value")
+                    parameter("__VIEWSTATEGENERATOR") = HtmlParserHelper.GetHtmlValue(html, "input", "name", "__VIEWSTATEGENERATOR", "value")
                     parameter("ctl00$ctl00$MainContent$TopContent$ibtNext.x") = "0"
                     parameter("ctl00$ctl00$MainContent$TopContent$ibtNext.y") = "0"
 
-                    nextUrl = UrlParserUtil.GetBaseDirUrl(httpClient.GetLastUrl()) & HtmlParserUtil.GetHtmlValue(html, "form", "id", "sitemaster", "action")
+                    nextUrl = UrlParserHelper.GetBaseDirUrl(httpClient.GetLastUrl()) & HtmlParserHelper.GetHtmlValue(html, "form", "id", "sitemaster", "action")
 
                     With New AuthForm() With {.Left = Me.Left, .Top = Me.Top, .Text = "IDロック電話番号認証"}
                         .Panel_IdLock.Top = 12
@@ -258,19 +286,20 @@ Public Class MainForm
 
                 Case html.Contains("STEP2")
 
-                    parameter("__VIEWSTATE") = HtmlParserUtil.GetHtmlValue(html, "input", "name", "__VIEWSTATE", "value")
-                    parameter("__VIEWSTATEGENERATOR") = HtmlParserUtil.GetHtmlValue(html, "input", "name", "__VIEWSTATEGENERATOR", "value")
+                    parameter("__VIEWSTATE") = HtmlParserHelper.GetHtmlValue(html, "input", "name", "__VIEWSTATE", "value")
+                    parameter("__VIEWSTATEGENERATOR") = HtmlParserHelper.GetHtmlValue(html, "input", "name", "__VIEWSTATEGENERATOR", "value")
                     parameter("ctl00$ctl00$MainContent$TopContent$ibtNext.x") = "0"
                     parameter("ctl00$ctl00$MainContent$TopContent$ibtNext.y") = "0"
 
-                    nextUrl = UrlParserUtil.GetBaseDirUrl(httpClient.GetLastUrl()) & HtmlParserUtil.GetHtmlValue(html, "form", "id", "sitemaster", "action")
+                    nextUrl = UrlParserHelper.GetBaseDirUrl(httpClient.GetLastUrl()) & HtmlParserHelper.GetHtmlValue(html, "form", "id", "sitemaster", "action")
 
-                    Dim tel As String = HtmlParserUtil.GetHtmlInnerText(html, "span", "id", "MainContent_TopContent_labTelNumber")
+                    Dim tel As String = HtmlParserHelper.GetHtmlInnerText(html, "span", "id", "MainContent_TopContent_labTelNumber")
 
                     With New AuthForm() With {.Left = Me.Left, .Top = Me.Top, .Text = "IDロック電話番号認証"}
                         .Panel_IdLock.Top = 12
                         .Panel_IdLock.Visible = True
                         .Label_IdLock.Text = .Label_IdLock.Text.Replace("%step%", "2").Replace("%message%", $"電話の準備が出来たらOKボタンを押してにゃ!!{vbCrLf}電話番号の末尾 [{tel}]")
+                        .Label_Tel.Visible = False
                         .OK_Button.Enabled = True
                         If .ShowDialog() <> DialogResult.OK Then Return 0
                     End With
@@ -278,14 +307,17 @@ Public Class MainForm
 
                 Case html.Contains("STEP3")
 
-                    parameter("__EVENTTARGET") = "ctl00$ctl00$MainContent$TopContent$ibtNext"
-                    parameter("__EVENTARGUMENT") = ""
-                    parameter("__VIEWSTATE") = HtmlParserUtil.GetHtmlValue(html, "input", "name", "__VIEWSTATE", "value")
-                    parameter("__VIEWSTATEGENERATOR") = HtmlParserUtil.GetHtmlValue(html, "input", "name", "__VIEWSTATEGENERATOR", "value")
+                    'parameter("__EVENTTARGET") = "ctl00$ctl00$MainContent$TopContent$ibtNext"
+                    'parameter("__EVENTARGUMENT") = ""
+                    'parameter("__VIEWSTATE") = HtmlParserHelper.GetHtmlValue(html, "input", "name", "__VIEWSTATE", "value")
+                    'parameter("__VIEWSTATEGENERATOR") = HtmlParserHelper.GetHtmlValue(html, "input", "name", "__VIEWSTATEGENERATOR", "value")
 
-                    nextUrl = UrlParserUtil.GetBaseDirUrl(httpClient.GetLastUrl()) & HtmlParserUtil.GetHtmlValue(html, "form", "id", "sitemaster", "action")
+                    'nextUrl = UrlParserHelper.GetBaseDirUrl(httpClient.GetLastUrl()) & HtmlParserHelper.GetHtmlValue(html, "form", "id", "sitemaster", "action")
+                    nextUrl = HtmlParserHelper.GetHtmlValue(html, "META", "HTTP-EQUIV", "Refresh", "CONTENT")
+                    nextUrl = nextUrl.Replace("10;URL=", "")
+                    nextUrl = UrlParserHelper.GetBaseDomainUrl(httpClient.GetLastUrl()) & nextUrl
 
-                    Dim tel As String = HtmlParserUtil.GetHtmlInnerText(html, "td", "class", "tbr authcode")
+                    Dim tel As String = HtmlParserHelper.GetHtmlInnerText(html, "td", "class", "tbr authcode")
 
                     With New AuthForm() With {.Left = Me.Left, .Top = Me.Top, .Text = "IDロック電話番号認証"}
                         .Panel_IdLock.Top = 12
@@ -341,7 +373,7 @@ Public Class MainForm
             gameAccounts.Add(New Game With {.Id = id, .Siid = siid, .Limit = limit})
         Next
 
-        account.Cookie = httpClient.GetCookies(UrlParserUtil.GetBaseDomainUrl(URL_LOGIN))
+        account.Cookie = httpClient.GetCookies(UrlParserHelper.GetBaseDomainUrl(URL_LOGIN))
 
         SaveAccountsToXml(Path.Combine(appPath, "accounts.xml"), loginAccounts)
 
@@ -396,6 +428,31 @@ Public Class MainForm
 
     End Sub
 
+    Private Sub MainForm_Shown(sender As Object, e As EventArgs) Handles Me.Shown
+
+        If List_Account.Items.Count Then List_Account.SelectedIndex = 0
+
+    End Sub
+    Private Sub MainForm_Closing(sender As Object, e As CancelEventArgs) Handles Me.Closing
+
+        With appSettings
+            .Left = Me.Left
+            .Top = Me.Top
+            .WindowState = CInt(Me.WindowState)
+            .MinimizeToTray = MenuOption_MinimizeToTray.Checked
+        End With
+
+        SaveSettingsToXml(Path.Combine(appPath, "settings.xml"), appSettings)
+        SaveAccountsToXml(Path.Combine(appPath, "accounts.xml"), loginAccounts)
+
+    End Sub
+
+    Private Sub MainForm_Resize(sender As Object, e As EventArgs) Handles Me.Resize
+
+        If Me.WindowState = FormWindowState.Minimized AndAlso MenuOption_MinimizeToTray.Checked = True Then Me.ShowInTaskbar = False
+
+    End Sub
+
     Private Sub Button_Menu_Click(sender As Object, e As EventArgs) Handles Button_Account.Click, Button_Info.Click, Button_Option.Click
 
         Dim button = DirectCast(sender, Button)
@@ -447,24 +504,27 @@ Public Class MainForm
 
     Private Sub Menu_Button_Closing(sender As Object, e As ToolStripDropDownClosingEventArgs) Handles MenuAccount.Closing, MenuInfo.Closing, MenuOption.Closing
 
-        Dim menu = DirectCast(sender, ContextMenuStrip)
-        Dim button As Button
-
-        Select Case menu.Name
-            Case "MenuAccount" : button = Button_Account
-            Case "MenuInfo" : button = Button_Info
-            Case "MenuOption" : button = Button_Option
+        Select Case DirectCast(sender, ContextMenuStrip).Name
+            Case "MenuAccount" : Button_Account.Enabled = True
+            Case "MenuInfo" : Button_Info.Enabled = True
+            Case "MenuOption" : Button_Option.Enabled = True
         End Select
-
-        button.Enabled = True
 
     End Sub
 
     Private Async Function List_Account_SelectedIndexChanged(sender As Object, e As EventArgs) As Task Handles List_Account.SelectedIndexChanged
 
-        If List_Account.SelectedIndex = -1 Then Exit Function
-
         List_Game.Items.Clear()
+
+        Button_Play.Enabled = False
+        Button_Info.Enabled = False
+
+        If List_Account.SelectedIndex = -1 Then
+            MenuAccount_Remove.Enabled = False
+            Exit Function
+        End If
+
+        MenuAccount_Remove.Enabled = True
 
         selectedAccount = List_Account.SelectedItem.ToString()
 
@@ -477,6 +537,8 @@ Public Class MainForm
         If List_Game.Items.Count Then
             List_Game.SelectedIndex = Math.Max(List_Game.FindString(selectedGame), 0)
             selectedGame = List_Game.SelectedItem.ToString().Split(" ")(0)
+            Button_Play.Enabled = True
+            Button_Info.Enabled = True
         Else
             selectedGame = ""
         End If
@@ -507,9 +569,9 @@ Public Class MainForm
             .Label_Account.Text = .Label_Account.Text.Replace("%mode%", "追加")
             .Panel_Account.Top = 12
             .Panel_Account.Visible = True
-            If .ShowDialog() = DialogResult.OK Then Exit Sub
-            Dim index As Integer = List_Account.SelectedIndex
-            List_Account.Items(index) = loginAccounts(index).Id
+            If .ShowDialog() <> DialogResult.OK Then Exit Sub
+            List_Account.Items.Add(loginAccounts(loginAccounts.Count - 1).Id)
+
         End With
 
     End Sub
@@ -517,13 +579,18 @@ Public Class MainForm
 
     Private Async Sub MenuAccount_Tool_Click(sender As Object, e As EventArgs) Handles MenuAccount_Tool.Click
 
+        If List_Account.SelectedIndex = -1 Then
+            System.Diagnostics.Process.Start(URL_RO_TOOL)
+            Exit Sub
+        End If
+
         Dim webClient As New HttpClientHelper()
         Dim html As String
 
         webClient.SetUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) NekoBrowser/1.0")
         webClient.SetEncoding(Encoding.GetEncoding("Shift_JIS"))
 
-        Dim nextUrl As String = URL_RO_TOOL
+        Dim nextUrl As String = $"{URL_RO_TOOL}?ReturnUrl={URL_RO_TOOL}"
 
         Try
             html = Await webClient.GetAsync(nextUrl)
@@ -532,7 +599,7 @@ Public Class MainForm
             Exit Sub
         End Try
 
-        nextUrl = UrlParserUtil.GetBaseDirUrl(webClient.GetLastUrl()) & HtmlParserUtil.GetHtmlValue(html, "form", "id", "ragnarockmaster", "action")
+        nextUrl = UrlParserHelper.GetBaseDirUrl(webClient.GetLastUrl()) & HtmlParserHelper.GetHtmlValue(html, "form", "id", "ragnarockmaster", "action")
         nextUrl = nextUrl.Replace("./", "").Replace("//front", "/front").Replace("&amp;", "&")
 
 
@@ -540,12 +607,12 @@ Public Class MainForm
 <!-- saved from url=(0014)about:internet -->
 <html>
     <body onLoad=""setTimeout('document.NekoRoginHtml.submit()', 2000);"">
-        {""} にログインしています。ちょっと待ってにゃ!!<br />
+        アトラクションツール にログインしています。ちょっと待ってにゃ!!<br />
         <form name=""NekoRoginHtml"" method=""post"" action=""{nextUrl}"">
             <input type=""hidden"" name=""__EVENTTARGET"" value="""" />
             <input type=""hidden"" name=""__EVENTARGUMENT"" value="""" />
-            <input type=""hidden"" name=""__VIEWSTATE"" value=""{HtmlParserUtil.GetHtmlValue(html, "input", "name", "__VIEWSTATE", "value")}""/>
-            <input type=""hidden"" name=""__VIEWSTATEGENERATOR"" value=""{HtmlParserUtil.GetHtmlValue(html, "input", "name", "__VIEWSTATEGENERATOR", "value")}""/>
+            <input type=""hidden"" name=""__VIEWSTATE"" value=""{HtmlParserHelper.GetHtmlValue(html, "input", "name", "__VIEWSTATE", "value")}""/>
+            <input type=""hidden"" name=""__VIEWSTATEGENERATOR"" value=""{HtmlParserHelper.GetHtmlValue(html, "input", "name", "__VIEWSTATEGENERATOR", "value")}""/>
             <input type=""hidden"" name=""ctl00$ctl00$MainContent$TopContent$loginNameControl$txtLoginName"" value=""{loginAccounts.FirstOrDefault(Function(n) n.Id.ToString() = selectedAccount).Id}""/>
             <input type=""hidden"" name=""ctl00$ctl00$MainContent$TopContent$passwordControl$txtPassword"" value=""{loginAccounts.FirstOrDefault(Function(n) n.Id.ToString() = selectedAccount).Passwd}""/>
             <input type=""hidden"" name=""ctl00$ctl00$MainContent$TopContent$OTPControl$inputOTP"" value=""""/>
@@ -558,15 +625,11 @@ Public Class MainForm
             writer.WriteLine(temp)
         End Using
 
-        Await Task.Delay(1000)
+        Win32Helper.ShellExecute(Path.Combine(appPath, "temp.html"))
 
-        Win32Util.ShellExecute(Path.Combine(appPath, "temp.html"))
+        Await Task.Delay(2000)
 
-    End Sub
-
-    Private Sub MainForm_Shown(sender As Object, e As EventArgs) Handles Me.Shown
-
-        If List_Account.Items.Count Then List_Account.SelectedIndex = 0
+        System.IO.File.Delete(Path.Combine(appPath, "temp.html"))
 
     End Sub
 
@@ -574,7 +637,7 @@ Public Class MainForm
 
         Dim dirName As String = DirectCast(sender, ToolStripItem).Tag.ToString()
 
-        Dim roPath As String = Win32Util.GetRegistryValue("HKEY_CLASSES_ROOT\ROEXEURI\shell\open\command", Nothing)
+        Dim roPath As String = Win32Helper.GetRegistryValue("HKEY_CLASSES_ROOT\ROEXEURI\shell\open\command", Nothing)
         If String.IsNullOrEmpty(roPath) Then
             MessageBox.Show($"エラー : ROEXEURIのレジストリが見つからないにゃ!!{vbCrLf}RagnarokOnlineのインストールを確認してにゃ!!")
             Exit Sub
@@ -582,13 +645,13 @@ Public Class MainForm
 
         roPath = Path.GetDirectoryName(roPath.Replace("""%1""", "").Replace("""", ""))
 
-        Win32Util.ShellExecute(Path.Combine(roPath, dirName))
+        Win32Helper.ShellExecute(Path.Combine(roPath, dirName))
 
     End Sub
 
     Private Sub MenuOption_Setup_Click_1(sender As Object, e As EventArgs) Handles MenuOption_Setup.Click
 
-        Dim roPath As String = Win32Util.GetRegistryValue("HKEY_CLASSES_ROOT\ROEXEURI\shell\open\command", Nothing)
+        Dim roPath As String = Win32Helper.GetRegistryValue("HKEY_CLASSES_ROOT\ROEXEURI\shell\open\command", Nothing)
         If String.IsNullOrEmpty(roPath) Then
             MessageBox.Show($"エラー : ROEXEURIのレジストリが見つからないにゃ!!{vbCrLf}RagnarokOnlineのインストールを確認してにゃ!!")
             Exit Sub
@@ -596,7 +659,7 @@ Public Class MainForm
 
         roPath = Path.GetDirectoryName(roPath.Replace("""%1""", "").Replace("""", ""))
 
-        Win32Util.ShellExecute(Path.Combine(roPath, "Setup.exe"))
+        Win32Helper.ShellExecute(Path.Combine(roPath, "Setup.exe"))
     End Sub
 
     Private Sub MenuOption_About_Click(sender As Object, e As EventArgs) Handles MenuOption_About.Click
@@ -613,7 +676,7 @@ Public Class MainForm
 
         If MessageBox.Show($"ガンホーID[{List_Account.SelectedItem.ToString()}]を削除しますにゃ？", "", MessageBoxButtons.YesNo) <> DialogResult.Yes Then Exit Sub
 
-        List_Account.Items.Remove(index)
+        List_Account.Items.RemoveAt(index)
         loginAccounts.RemoveAt(index)
 
         List_Account.SelectedIndex = -1
@@ -630,15 +693,9 @@ Public Class MainForm
 
         Dim roid = gameAccounts.FirstOrDefault(Function(n) n.Id.ToString = selectedGame)
 
-        Dim nextUrl As String
+        Dim menu = DirectCast(sender, ToolStripMenuItem)
 
-        Select Case DirectCast(sender, ToolStripMenuItem).Name
-            Case "MenuInfo_Character"
-                nextUrl = $"{URL_RO_CHARACTER}?SIID={roid.Siid}"
-            Case "MenuInfo_Quest"
-                nextUrl = $"{URL_RO_QUEST}?SIID={roid.Siid}"
-        End Select
-
+        Dim nextUrl As String = IIf(DirectCast(sender, ToolStripMenuItem).Name = "MenuInfo_Character", $"{URL_RO_CHARACTER}?SIID={roid.Siid}", $"{URL_RO_QUEST}?SIID={roid.Siid}")
 
         Try
             html = Await webClient.GetAsync(nextUrl)
@@ -648,8 +705,7 @@ Public Class MainForm
         End Try
 
 
-        nextUrl = UrlParserUtil.GetBaseDirUrl(webClient.GetLastUrl()) & HtmlParserUtil.GetHtmlValue(html, "form", "id", "sitemaster", "action")
-
+        nextUrl = UrlParserHelper.GetBaseDirUrl(webClient.GetLastUrl()) & HtmlParserHelper.GetHtmlValue(html, "form", "id", "sitemaster", "action")
         nextUrl = nextUrl.Replace("./", "").Replace("//front", "/front").Replace("&amp;", "&")
 
 
@@ -657,12 +713,12 @@ Public Class MainForm
 <!-- saved from url=(0014)about:internet -->
 <html>
     <body onLoad=""setTimeout('document.NekoRoginHtml.submit()', 2000);"">
-        {""} にログインしています。ちょっと待ってにゃ!!<br />
+        {menu.Text} にログインしています。ちょっと待ってにゃ!!<br />
         <form name=""NekoRoginHtml"" method=""post"" action=""{nextUrl}"">
             <input type=""hidden"" name=""__EVENTTARGET"" value="""" />
             <input type=""hidden"" name=""__EVENTARGUMENT"" value="""" />
-            <input type=""hidden"" name=""__VIEWSTATE"" value=""{HtmlParserUtil.GetHtmlValue(html, "input", "name", "__VIEWSTATE", "value")}""/>
-            <input type=""hidden"" name=""__VIEWSTATEGENERATOR"" value=""{HtmlParserUtil.GetHtmlValue(html, "input", "name", "__VIEWSTATEGENERATOR", "value")}""/>
+            <input type=""hidden"" name=""__VIEWSTATE"" value=""{HtmlParserHelper.GetHtmlValue(html, "input", "name", "__VIEWSTATE", "value")}""/>
+            <input type=""hidden"" name=""__VIEWSTATEGENERATOR"" value=""{HtmlParserHelper.GetHtmlValue(html, "input", "name", "__VIEWSTATEGENERATOR", "value")}""/>
             <input type=""hidden"" name=""ctl00$MainContent$loginNameControl$txtLoginName"" value=""{loginAccounts.FirstOrDefault(Function(n) n.Id.ToString() = selectedAccount).Id}""/>
             <input type=""hidden"" name=""ctl00$MainContent$passwordControl$txtPassword"" value=""{loginAccounts.FirstOrDefault(Function(n) n.Id.ToString() = selectedAccount).Passwd}""/>
             <input type=""hidden"" name=""ctl00$MainContent$OTPControl$inputOTP"" value=""""/>
@@ -675,29 +731,11 @@ Public Class MainForm
             writer.WriteLine(temp)
         End Using
 
-        Await Task.Delay(1000)
+        Win32Helper.ShellExecute(Path.Combine(appPath, "temp.html"))
 
-        Win32Util.ShellExecute(Path.Combine(appPath, "temp.html"))
+        Await Task.Delay(2000)
 
-    End Sub
-
-    Private Sub MainForm_Closing(sender As Object, e As CancelEventArgs) Handles Me.Closing
-
-        With appSettings
-            .Left = Me.Left
-            .Top = Me.Top
-            .WindowState = CInt(Me.WindowState)
-            .MinimizeToTray = MenuOption_MinimizeToTray.Checked
-        End With
-
-        SaveSettingsToXml(Path.Combine(appPath, "settings.xml"), appSettings)
-        SaveAccountsToXml(Path.Combine(appPath, "accounts.xml"), loginAccounts)
-
-    End Sub
-
-    Private Sub MainForm_Resize(sender As Object, e As EventArgs) Handles Me.Resize
-
-        If Me.WindowState = FormWindowState.Minimized Then Me.ShowInTaskbar = False
+        System.IO.File.Delete(Path.Combine(appPath, "temp.html"))
 
     End Sub
 

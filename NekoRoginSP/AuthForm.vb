@@ -18,7 +18,6 @@ Public Class AuthForm
                 End If
 
                 loginAccounts.Add(New Account With {.Id = id, .Passwd = passwd})
-                MainForm.List_Account.Items.Add(id)
 
             Case "アカウント修正"
                 id = Text_Id.Text
