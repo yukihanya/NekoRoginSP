@@ -24,12 +24,12 @@ Public Class AuthForm
                 id = Text_Id.Text
                 passwd = Text_Passwd.Text
 
-                If MainForm.selectedAccountId <> id And loginAccounts.Any(Function(n) n.Id = id) Then
+                If MainForm.selectedAccount <> id And loginAccounts.Any(Function(n) n.Id = id) Then
                     MessageBox.Show($"エラー : 既に登録されているガンホーIDですにゃ!!{vbCrLf}id={id}")
                     Exit Select
                 End If
 
-                With loginAccounts.FirstOrDefault(Function(n) n.Id.ToString() = MainForm.selectedAccountId)
+                With loginAccounts.FirstOrDefault(Function(n) n.Id.ToString() = MainForm.selectedAccount)
                     .Id = id
                     .Passwd = passwd
                 End With

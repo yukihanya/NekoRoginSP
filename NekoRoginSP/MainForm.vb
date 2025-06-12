@@ -1,14 +1,9 @@
 ﻿Imports System.ComponentModel
 Imports System.IO
-Imports System.Net
 Imports System.Net.Http
-Imports System.Net.WebRequestMethods
-Imports System.Security.Policy
+Imports System.Reflection
 Imports System.Text
 Imports System.Text.RegularExpressions
-Imports System.Threading
-Imports System.Xml
-Imports System.Xml.Serialization
 Imports NekoRoginSP.AccountSaveData
 
 Public Class MainForm
@@ -28,52 +23,21 @@ Public Class MainForm
         Dim Limit As String
     End Structure
 
-    Public selectedAccountId As String
-    Private selectedGameId As String
+    Public selectedAccount As String
+    Private selectedGame As String
     Private gameAccounts As New List(Of Game)
     Private httpClient As New HttpClientHelper()
     Public tempOtp As String
-
-
-    Private Sub BuildContextMenu()
-
-        Dim menu = MenuTasktray
-
-        menu.Items.Clear()
-
-        ' IDList_A を追加
-        For Each acc In loginAccounts
-            Dim item As New ToolStripMenuItem(acc.Id)
-            AddHandler item.Click, AddressOf MenuItemClicked
-            menu.Items.Add(item)
-        Next
-
-        ' 区切り線
-        menu.Items.Add(New ToolStripSeparator())
-
-        ' IDList_B を追加
-        For Each acc In gameAccounts
-            Dim item As New ToolStripMenuItem(acc.Id)
-            AddHandler item.Click, AddressOf MenuItemClicked
-            menu.Items.Add(item)
-        Next
-
-        ' 最後のセパレータ
-        menu.Items.Add(New ToolStripSeparator())
-    End Sub
-
-    Private Sub MenuItemClicked(sender As Object, e As EventArgs)
-        Dim item As ToolStripMenuItem = DirectCast(sender, ToolStripMenuItem)
-        MessageBox.Show("選択された: " & item.Text)
-    End Sub
 
     Private Async Function Login() As Task(Of Integer)
 
         Dim html As String
         Dim nextUrl As String = URL_LOGIN
         Dim parameter As New Dictionary(Of String, String)
-        Dim account = loginAccounts.FirstOrDefault(Function(n) n.Id = selectedAccountId)
+        Dim account = loginAccounts.FirstOrDefault(Function(n) n.Id = selectedAccount)
         Dim success As Boolean
+
+        gameAccounts.Clear()
 
         httpClient = New HttpClientHelper()
 
@@ -90,7 +54,6 @@ Public Class MainForm
             ' URLに含まれるGETクエリが変換されるのを防ぐにゃ
             nextUrl = nextUrl.Replace("./", "").Replace("//front", "/front").Replace("&amp;", "&")
 
-            ' ログインをするにゃ
             Try
                 ' パラメータがあればPOST、なければGETにゃ
                 If parameter.Count Then
@@ -389,7 +352,7 @@ Public Class MainForm
     Private Async Function GetGameCode() As Task(Of String)
 
         Dim html As String
-        Dim roid = gameAccounts.FirstOrDefault(Function(n) n.Id.ToString = selectedGameId)
+        Dim roid = gameAccounts.FirstOrDefault(Function(n) n.Id.ToString = selectedGame)
         Dim nextUrl As String = $"{URL_GAMECODE}?SIID={roid.Siid}"
 
         Try
@@ -451,21 +414,7 @@ Public Class MainForm
 
     Private Async Sub Button_Play_Click(sender As Object, e As EventArgs) Handles Button_Play.Click
 
-        ' ゲーム起動
-        If List_Game.SelectedIndex = -1 Then Exit Sub
-
-        selectedGameId = List_Game.SelectedItem.ToString.Split(" ")(0)
-
-        gameAccounts.Clear()
-        List_Game.Items.Clear()
-
-        If Await Login() = 0 Then Exit Sub
-
-        For Each item In gameAccounts
-            List_Game.Items.Add($"{item.Id} [{item.Limit}]")
-        Next
-
-        List_Game.SelectedIndex = List_Game.FindString(selectedGameId)
+        Await List_Account_SelectedIndexChanged(List_Account, EventArgs.Empty)
 
         Dim code As String = Await GetGameCode()
 
@@ -500,6 +449,7 @@ Public Class MainForm
 
         Dim menu = DirectCast(sender, ContextMenuStrip)
         Dim button As Button
+
         Select Case menu.Name
             Case "MenuAccount" : button = Button_Account
             Case "MenuInfo" : button = Button_Info
@@ -510,33 +460,41 @@ Public Class MainForm
 
     End Sub
 
+    Private Async Function List_Account_SelectedIndexChanged(sender As Object, e As EventArgs) As Task Handles List_Account.SelectedIndexChanged
 
-    Private Async Sub List_Account_SelectedIndexChanged(sender As Object, e As EventArgs) Handles List_Account.SelectedIndexChanged
+        If List_Account.SelectedIndex = -1 Then Exit Function
 
-        Dim c = DirectCast(sender, ComboBox)
-
-        If c.SelectedIndex = -1 Then Exit Sub
-
-        gameAccounts.Clear()
         List_Game.Items.Clear()
 
-        selectedAccountId = c.SelectedItem.ToString()
-        selectedGameId = ""
+        selectedAccount = List_Account.SelectedItem.ToString()
 
-        If Await Login() = 0 Then Exit Sub
+        If Await Login() = 0 Then Exit Function
 
         For Each item In gameAccounts
             List_Game.Items.Add($"{item.Id} [{item.Limit}]")
         Next
 
-        BuildContextMenu()
+        If List_Game.Items.Count Then
+            List_Game.SelectedIndex = Math.Max(List_Game.FindString(selectedGame), 0)
+            selectedGame = List_Game.SelectedItem.ToString().Split(" ")(0)
+        Else
+            selectedGame = ""
+        End If
 
-        If List_Game.Items.Count Then List_Game.SelectedIndex = 0
+    End Function
+
+
+
+    Private Sub List_Game_SelectedIndexChanged(sender As Object, e As EventArgs) Handles List_Game.SelectedIndexChanged
+
+        If List_Game.SelectedIndex = -1 Then
+            selectedGame = ""
+            Exit Sub
+        End If
+
+        selectedGame = List_Game.SelectedItem.ToString.Split(" ")(0)
 
     End Sub
-
-
-
     Private Sub List_Game_DoubleClick(sender As Object, e As EventArgs) Handles List_Game.DoubleClick
 
         Button_Play.PerformClick()
@@ -588,8 +546,8 @@ Public Class MainForm
             <input type=""hidden"" name=""__EVENTARGUMENT"" value="""" />
             <input type=""hidden"" name=""__VIEWSTATE"" value=""{HtmlParserUtil.GetHtmlValue(html, "input", "name", "__VIEWSTATE", "value")}""/>
             <input type=""hidden"" name=""__VIEWSTATEGENERATOR"" value=""{HtmlParserUtil.GetHtmlValue(html, "input", "name", "__VIEWSTATEGENERATOR", "value")}""/>
-            <input type=""hidden"" name=""ctl00$ctl00$MainContent$TopContent$loginNameControl$txtLoginName"" value=""{loginAccounts.FirstOrDefault(Function(n) n.Id.ToString() = selectedAccountId).Id}""/>
-            <input type=""hidden"" name=""ctl00$ctl00$MainContent$TopContent$passwordControl$txtPassword"" value=""{loginAccounts.FirstOrDefault(Function(n) n.Id.ToString() = selectedAccountId).Passwd}""/>
+            <input type=""hidden"" name=""ctl00$ctl00$MainContent$TopContent$loginNameControl$txtLoginName"" value=""{loginAccounts.FirstOrDefault(Function(n) n.Id.ToString() = selectedAccount).Id}""/>
+            <input type=""hidden"" name=""ctl00$ctl00$MainContent$TopContent$passwordControl$txtPassword"" value=""{loginAccounts.FirstOrDefault(Function(n) n.Id.ToString() = selectedAccount).Passwd}""/>
             <input type=""hidden"" name=""ctl00$ctl00$MainContent$TopContent$OTPControl$inputOTP"" value=""""/>
             <input type=""hidden"" name=""ctl00$ctl00$MainContent$TopContent$login"" value="""" />
         </form>
@@ -643,7 +601,7 @@ Public Class MainForm
 
     Private Sub MenuOption_About_Click(sender As Object, e As EventArgs) Handles MenuOption_About.Click
 
-        MessageBox.Show($"{My.Application.Info.StackTrace}")
+        MessageBox.Show($"NekoRoginSP {My.Application.Info.Version}{vbCrLf}{My.Application.Info.Copyright} / {My.Application.Info.CompanyName}")
 
     End Sub
 
@@ -653,7 +611,7 @@ Public Class MainForm
 
         If index = -1 Then Exit Sub
 
-        If MessageBox.Show($"ガンホーID[{List_Account.SelectedItem}]を削除しますにゃ？", "", MessageBoxButtons.YesNo) <> DialogResult.OK Then Exit Sub
+        If MessageBox.Show($"ガンホーID[{List_Account.SelectedItem.ToString()}]を削除しますにゃ？", "", MessageBoxButtons.YesNo) <> DialogResult.OK Then Exit Sub
 
         List_Account.Items.Remove(index)
         loginAccounts.RemoveAt(index)
@@ -662,17 +620,13 @@ Public Class MainForm
 
     Private Async Sub MenuInfo_Character_Click(sender As Object, e As EventArgs) Handles MenuInfo_Character.Click, MenuInfo_Quest.Click
 
-        If List_Game.SelectedIndex = -1 Then Exit Sub
-
-        selectedGameId = List_Game.SelectedItem.ToString.Split(" ")(0)
-
         Dim webClient As New HttpClientHelper()
         Dim html As String
 
         webClient.SetUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) NekoBrowser/1.0")
         webClient.SetEncoding(Encoding.GetEncoding("Shift_JIS"))
 
-        Dim roid = gameAccounts.FirstOrDefault(Function(n) n.Id.ToString = selectedGameId)
+        Dim roid = gameAccounts.FirstOrDefault(Function(n) n.Id.ToString = selectedGame)
 
         Dim nextUrl As String
 
@@ -707,8 +661,8 @@ Public Class MainForm
             <input type=""hidden"" name=""__EVENTARGUMENT"" value="""" />
             <input type=""hidden"" name=""__VIEWSTATE"" value=""{HtmlParserUtil.GetHtmlValue(html, "input", "name", "__VIEWSTATE", "value")}""/>
             <input type=""hidden"" name=""__VIEWSTATEGENERATOR"" value=""{HtmlParserUtil.GetHtmlValue(html, "input", "name", "__VIEWSTATEGENERATOR", "value")}""/>
-            <input type=""hidden"" name=""ctl00$MainContent$loginNameControl$txtLoginName"" value=""{loginAccounts.FirstOrDefault(Function(n) n.Id.ToString() = selectedAccountId).Id}""/>
-            <input type=""hidden"" name=""ctl00$MainContent$passwordControl$txtPassword"" value=""{loginAccounts.FirstOrDefault(Function(n) n.Id.ToString() = selectedAccountId).Passwd}""/>
+            <input type=""hidden"" name=""ctl00$MainContent$loginNameControl$txtLoginName"" value=""{loginAccounts.FirstOrDefault(Function(n) n.Id.ToString() = selectedAccount).Id}""/>
+            <input type=""hidden"" name=""ctl00$MainContent$passwordControl$txtPassword"" value=""{loginAccounts.FirstOrDefault(Function(n) n.Id.ToString() = selectedAccount).Passwd}""/>
             <input type=""hidden"" name=""ctl00$MainContent$OTPControl$inputOTP"" value=""""/>
             <input type=""hidden"" name=""ctl00$MainContent$btNext1"" value="""" />
         </form>
@@ -722,16 +676,6 @@ Public Class MainForm
         Await Task.Delay(1000)
 
         Win32Util.ShellExecute(Path.Combine(appPath, "temp.html"))
-
-    End Sub
-
-    Private Sub TasktrayIcon_MouseDoubleClick(sender As Object, e As MouseEventArgs) Handles TasktrayIcon.MouseDoubleClick
-
-        With Me
-            .ShowInTaskbar = True
-            .WindowState = 0
-            .Show()
-        End With
 
     End Sub
 
@@ -758,6 +702,137 @@ Public Class MainForm
     Private Sub MenuOption_MinimizeToTray_Click(sender As Object, e As EventArgs) Handles MenuOption_MinimizeToTray.Click
 
         MenuOption_MinimizeToTray.Checked = Not MenuOption_MinimizeToTray.Checked
+
+    End Sub
+
+    Private Sub TasktrayIcon_MouseDoubleClick(sender As Object, e As MouseEventArgs) Handles TasktrayIcon.MouseDoubleClick
+
+        With Me
+            .ShowInTaskbar = True
+            .WindowState = 0
+            .Show()
+        End With
+
+    End Sub
+
+    Private Sub TasktrayIcon_MouseUp(sender As Object, e As MouseEventArgs) Handles TasktrayIcon.MouseUp
+
+
+        If e.Button = MouseButtons.Right Then
+            ' メニュー
+            Dim menu = MenuTasktray
+
+            menu.Items.Clear()
+
+            For Each acc In loginAccounts
+                Dim item As New ToolStripMenuItem(acc.Id)
+                item.Name = $"TasktrayAccountsMenuItem_{acc.Id}"
+                If acc.Id = selectedAccount Then item.Checked = True
+                AddHandler item.Click, AddressOf TasktrayAccountsMenuItem_Clicked
+                menu.Items.Add(item)
+            Next
+
+            menu.Items.Add(New ToolStripSeparator())
+
+            For Each acc In gameAccounts
+                Dim item As New ToolStripMenuItem($"{acc.Id} [{acc.Limit}]")
+                item.Name = $"TasktrayGamesMenuItem_{acc.Id}"
+                If acc.Id = selectedGame Then item.Checked = True
+                AddHandler item.Click, AddressOf TasktrayGamesMenuItem_Clicked
+                menu.Items.Add(item)
+            Next
+
+            menu.Items.Add(New ToolStripSeparator())
+
+            ' 既存メニューを追加
+            MergeMenusWithHandler(menu, MenuOption, AddressOf CommonClickHandler)
+
+            ' カーソルの絶対位置（スクリーン座標）
+            Dim screen As Screen = Screen.FromPoint(Cursor.Position)
+            Dim estimatedSize As New Size(200, menu.Items.Count * 24)
+
+            Dim showPos As Point = Cursor.Position
+
+            If showPos.X + estimatedSize.Width > screen.WorkingArea.Right Then showPos.X = screen.WorkingArea.Right - estimatedSize.Width
+            If showPos.Y + estimatedSize.Height > screen.WorkingArea.Bottom Then showPos.Y = screen.WorkingArea.Bottom - estimatedSize.Height
+
+            If showPos.X < screen.WorkingArea.Left Then showPos.X = screen.WorkingArea.Left
+            If showPos.Y < screen.WorkingArea.Top Then showPos.Y = screen.WorkingArea.Top
+
+            menu.Show(showPos)
+
+
+        End If
+
+    End Sub
+
+    Private Function CloneMenuItemWithHandler(original As ToolStripItem, handler As EventHandler) As ToolStripItem
+        If TypeOf original Is ToolStripMenuItem Then
+            Dim orig = DirectCast(original, ToolStripMenuItem)
+            Dim clone As New ToolStripMenuItem(orig.Text)
+            clone.Name = $"{orig.Name}_Clone"
+            clone.Checked = orig.Checked
+            AddHandler clone.Click, handler
+
+            ' サブメニューも再帰コピー
+            For Each subItem As ToolStripItem In orig.DropDownItems
+                clone.DropDownItems.Add(CloneMenuItemWithHandler(subItem, handler))
+            Next
+            Return clone
+        ElseIf TypeOf original Is ToolStripSeparator Then
+            Return New ToolStripSeparator()
+        End If
+        Return Nothing
+    End Function
+
+
+    Private Sub MergeMenusWithHandler(target As ContextMenuStrip, fromMenu As ContextMenuStrip, handler As EventHandler)
+        For Each item As ToolStripItem In fromMenu.Items
+            Dim cloned = CloneMenuItemWithHandler(item, handler)
+            If cloned IsNot Nothing Then
+                target.Items.Add(cloned)
+            End If
+        Next
+    End Sub
+
+
+    Private Sub CommonClickHandler(sender As Object, e As EventArgs)
+        Dim item = DirectCast(sender, ToolStripMenuItem)
+
+        Select Case item.Text
+            Case "ゲーム設定" : MenuOption_Setup.PerformClick()
+            Case "インストールフォルダを開く" : MenuOption_Shell.PerformClick()
+            Case "チャットログ" : MenuOption_ShellChatLog.PerformClick()
+            Case "スクリーンショット" : MenuOption_ShellScreenShot.PerformClick()
+            Case "BGM" : MenuOption_ShellMusic.PerformClick()
+            Case "最小化時にタスクトレイに格納する" : MenuOption_MinimizeToTray.PerformClick()
+            Case "🐈️" : MenuOption_About.PerformClick()
+            Case "アプリケーションの終了" : MenuOption_Quit.PerformClick()
+        End Select
+
+
+    End Sub
+    Private Sub TasktrayAccountsMenuItem_Clicked(sender As Object, e As EventArgs)
+
+        Dim id As String = DirectCast(sender, ToolStripMenuItem).Text
+
+        List_Account.SelectedIndex = Math.Max(List_Account.FindString(id), 0)
+    End Sub
+
+
+    Private Sub TasktrayGamesMenuItem_Clicked(sender As Object, e As EventArgs)
+
+        Dim id As String = DirectCast(sender, ToolStripMenuItem).Text.Split(" ")(0)
+
+        List_Game.SelectedIndex = Math.Max(List_Game.FindString(id), 0)
+
+        Button_Play.PerformClick()
+
+    End Sub
+
+    Private Sub MenuOption_Quit_Click(sender As Object, e As EventArgs) Handles MenuOption_Quit.Click
+
+        Me.Close()
 
     End Sub
 End Class
