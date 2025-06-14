@@ -1,5 +1,4 @@
-﻿Imports System.Windows.Forms
-
+﻿
 Public Class AuthForm
 
     Private Sub OK_Button_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles OK_Button.Click
@@ -17,7 +16,7 @@ Public Class AuthForm
                     Exit Select
                 End If
 
-                loginAccounts.Add(New Account With {.Id = id, .Passwd = passwd})
+                loginAccounts.Add(New Account With {.Id = id, .Password = passwd})
 
             Case "アカウント修正"
                 id = Text_Id.Text
@@ -30,12 +29,13 @@ Public Class AuthForm
 
                 With loginAccounts.FirstOrDefault(Function(n) n.Id.ToString() = MainForm.selectedAccount)
                     .Id = id
-                    .Passwd = passwd
+                    .Password = passwd
                 End With
 
             Case "ワンタイムパスワード"
                 MainForm.tempOtp = Text_OTP.Text
             Case "画像認証"
+
                 MainForm.tempOtp = Text_Image.Text
         End Select
 
@@ -46,10 +46,6 @@ Public Class AuthForm
     Private Sub Cancel_Button_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles Cancel_Button.Click
         Me.DialogResult = System.Windows.Forms.DialogResult.Cancel
         Me.Close()
-    End Sub
-
-    Private Sub AuthForm_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-
     End Sub
 
     Private Sub TextBoxes_GotFocus(sender As Object, e As EventArgs) Handles Text_Id.GotFocus, Text_Image.GotFocus
@@ -128,6 +124,10 @@ Public Class AuthForm
         End If
 
         OK_Button.Enabled = True
+
+    End Sub
+
+    Private Sub AuthForm_Load(sender As Object, e As EventArgs) Handles MyBase.Load
 
     End Sub
 End Class

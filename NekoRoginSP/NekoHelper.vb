@@ -78,10 +78,10 @@ Module NekoHelper
 
             ' 両方試すにゃ
             Dim match = Regex.Match(source, pattern1, RegexOptions.IgnoreCase Or RegexOptions.Singleline)
-            If match.Success Then Return Net.WebUtility.HtmlDecode(match.Groups(1).Value)
+            If match.Success Then Return Web.HttpUtility.HtmlDecode(match.Groups(1).Value)
 
             match = Regex.Match(source, pattern2, RegexOptions.IgnoreCase Or RegexOptions.Singleline)
-            If match.Success Then Return Net.WebUtility.HtmlDecode(match.Groups(1).Value)
+            If match.Success Then Return Web.HttpUtility.HtmlDecode(match.Groups(1).Value)
 
             Return Nothing ' 見つからなかったにゃ
 
@@ -98,7 +98,6 @@ Module NekoHelper
             Return Nothing ' 見つからなかったにゃ
 
         End Function
-
 
     End Class
 

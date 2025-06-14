@@ -20,7 +20,7 @@ Public Module AccountSaveData
         End Sub
 
         Public Property Id As String
-        Public Property Passwd As String
+        Public Property Password As String
 
         <XmlIgnore>
         Public Property Cookie As Dictionary(Of String, String)
@@ -52,8 +52,8 @@ Public Module AccountSaveData
     Public Sub PrepareForSave(accounts As List(Of Account))
         For Each acc In accounts
             ' Base64 encode the password
-            If Not String.IsNullOrEmpty(acc.Passwd) Then
-                acc.Passwd = Convert.ToBase64String(Encoding.UTF8.GetBytes(acc.Passwd))
+            If Not String.IsNullOrEmpty(acc.Password) Then
+                acc.Password = Convert.ToBase64String(Encoding.UTF8.GetBytes(acc.Password))
             End If
 
             ' Cookie をシリアライズ可能形式にするにゃ
@@ -67,12 +67,12 @@ Public Module AccountSaveData
     Public Sub RestoreFromLoad(accounts As List(Of Account))
         For Each acc In accounts
             ' パスワードをBase64デコードにゃ
-            If Not String.IsNullOrEmpty(acc.Passwd) Then
+            If Not String.IsNullOrEmpty(acc.Password) Then
                 Try
-                    acc.Passwd = Encoding.UTF8.GetString(Convert.FromBase64String(acc.Passwd))
+                    acc.Password = Encoding.UTF8.GetString(Convert.FromBase64String(acc.Password))
                 Catch ex As FormatException
                     MessageBox.Show($"パスワードのBase64デコードに失敗したにゃ!! : {ex.Message}")
-                    acc.Passwd = ""
+                    acc.Password = ""
                 End Try
             End If
 

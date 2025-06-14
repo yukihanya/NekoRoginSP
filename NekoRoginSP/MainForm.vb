@@ -1,10 +1,12 @@
 ﻿Imports System.ComponentModel
 Imports System.IO
+Imports System.Net
 Imports System.Net.Http
 Imports System.Net.Security
 Imports System.Text
 Imports System.Text.RegularExpressions
 Imports System.Threading
+Imports NekoRoginSP
 
 Module Program
     <STAThread()>
@@ -12,12 +14,12 @@ Module Program
         Dim mutex As Mutex
         Dim createdNew As Boolean
 
-        ' アプリ名などのユニークな名前を指定（必ずアプリごとに変えてにゃ）
+        ' アプリ名などのユニークな名前を指定
         mutex = New Mutex(True, "NekoRoginSP_Mutex", createdNew)
 
         If Not createdNew Then
             ' すでに起動している場合
-            MessageBox.Show("すでにアプリが起動していますにゃ！", "多重起動防止", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            MessageBox.Show("既にアプリが起動していますにゃ!!")
             Return
         End If
 
@@ -50,11 +52,11 @@ Public Class MainForm
         Dim Limit As String
     End Structure
 
-    Public selectedAccount As String
+    Public Shared selectedAccount As String
     Private selectedGame As String
     Private gameAccounts As New List(Of Game)
     Private httpClient As New HttpClientHelper()
-    Public tempOtp As String
+    Public Shared tempOtp As String
 
 
     Private Async Function Login() As Task(Of Integer)
@@ -69,7 +71,7 @@ Public Class MainForm
 
         httpClient = New HttpClientHelper()
 
-        httpClient.SetUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) NekoBrowser/1.0")
+        httpClient.SetUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.142 Safari/537.36")
         httpClient.SetEncoding(Encoding.GetEncoding("Shift_JIS"))
 
         account.Cookie.Remove("goessosst")
@@ -80,7 +82,7 @@ Public Class MainForm
         For i As Integer = 0 To 9
 
             ' URLに含まれるGETクエリが変換されるのを防ぐにゃ
-            nextUrl = nextUrl.Replace("./", "").Replace("//front", "/front").Replace("&amp;", "&")
+            'nextUrl = nextUrl.Replace("./", "").Replace("//front", "/front").Replace("&amp;", "&")
 
             Try
                 ' パラメータがあればPOST、なければGETにゃ
@@ -115,7 +117,7 @@ Public Class MainForm
                         .Panel_Account.Visible = True
                         .Label_Account.Text = .Label_Account.Text.Replace("%mode%", "修正")
                         .Text_Id.Text = account.Id
-                        .Text_Passwd.Text = account.Passwd
+                        .Text_Passwd.Text = account.Password
                         .Label_Error.Text = .Label_Error.Text.Replace("%error%", "ガンホーID、パスワード、認証文字のいずれかに誤りがありますにゃ!!")
                         .Label_Error.Visible = True
                         If .ShowDialog() <> DialogResult.OK Then Return 0
@@ -159,7 +161,9 @@ Public Class MainForm
                         If .ShowDialog() <> DialogResult.OK Then Return 0
                     End With
 
-                    parameter("ctl00$ctl00$MainContent$TopContent$captchaControlAjax$txtCaptcha") = UrlEncodeHelper.UrlEncodeSjis(tempOtp)
+                    parameter("ctl00$ctl00$MainContent$TopContent$captchaControlAjax$txtCaptcha") = tempOtp
+
+
 
                 Case html.Contains("ログイン画像認証")
                     parameter("__LASTFOCUS") = ""
@@ -191,8 +195,7 @@ Public Class MainForm
                         If .ShowDialog() <> DialogResult.OK Then Return 0
                     End With
 
-                    parameter("ctl00$ctl00$MainContent$TopContent$captchaControlAjax$txtCaptcha") = UrlEncodeHelper.UrlEncodeSjis(tempOtp)
-
+                    parameter("ctl00$ctl00$MainContent$TopContent$captchaControlAjax$txtCaptcha") = tempOtp
 
             ' ワンタイムパスワード
                 Case html.Contains("ワンタイムパスワードの認証に失敗しました")
@@ -202,7 +205,7 @@ Public Class MainForm
                     parameter("__VIEWSTATE") = HtmlParserHelper.GetHtmlValue(html, "input", "name", "__VIEWSTATE", "value")
                     parameter("__VIEWSTATEGENERATOR") = HtmlParserHelper.GetHtmlValue(html, "input", "name", "__VIEWSTATEGENERATOR", "value")
                     parameter("ctl00$MainContent$loginNameControl$txtLoginName") = account.Id
-                    parameter("ctl00$MainContent$passwordControl$txtPassword") = account.Passwd
+                    parameter("ctl00$MainContent$passwordControl$txtPassword") = account.Password
                     parameter("ctl00$MainContent$btNext1") = ""
 
                     nextUrl = UrlParserHelper.GetBaseDirUrl(httpClient.GetLastUrl()) & HtmlParserHelper.GetHtmlValue(html, "form", "id", "sitemaster", "action")
@@ -227,7 +230,7 @@ Public Class MainForm
                     parameter("__VIEWSTATE") = HtmlParserHelper.GetHtmlValue(html, "input", "name", "__VIEWSTATE", "value")
                     parameter("__VIEWSTATEGENERATOR") = HtmlParserHelper.GetHtmlValue(html, "input", "name", "__VIEWSTATEGENERATOR", "value")
                     parameter("ctl00$MainContent$loginNameControl$txtLoginName") = account.Id
-                    parameter("ctl00$MainContent$passwordControl$txtPassword") = account.Passwd
+                    parameter("ctl00$MainContent$passwordControl$txtPassword") = account.Password
                     parameter("ctl00$MainContent$btNext1") = ""
 
                     nextUrl = UrlParserHelper.GetBaseDirUrl(httpClient.GetLastUrl()) & HtmlParserHelper.GetHtmlValue(html, "form", "id", "sitemaster", "action")
@@ -240,28 +243,6 @@ Public Class MainForm
                     End With
 
                     parameter("ctl00$MainContent$OTPControl$inputOTP") = tempOtp
-
-
-            ' ログインフォーム
-                Case html.Contains("ログインが必要です")
-
-                    parameter("__LASTFOCUS") = ""
-                    parameter("__EVENTTARGET") = ""
-                    parameter("__EVENTARGUMENT") = ""
-                    parameter("__VIEWSTATE") = HtmlParserHelper.GetHtmlValue(html, "input", "name", "__VIEWSTATE", "value")
-                    parameter("__VIEWSTATEGENERATOR") = HtmlParserHelper.GetHtmlValue(html, "input", "name", "__VIEWSTATEGENERATOR", "value")
-                    parameter("ctl00$MainContent$loginNameControl$txtLoginName") = account.Id
-                    parameter("ctl00$MainContent$passwordControl$txtPassword") = account.Passwd
-                    parameter("ctl00$MainContent$OTPControl$inputOTP") = ""
-                    parameter("ctl00$MainContent$btNext1") = ""
-
-                    nextUrl = UrlParserHelper.GetBaseDirUrl(httpClient.GetLastUrl()) & HtmlParserHelper.GetHtmlValue(html, "form", "id", "sitemaster", "action")
-
-                    Clipboard.SetText(html)
-                    For Each kvp As KeyValuePair(Of String, String) In parameter
-                        Console.WriteLine(kvp.Key & "=" & kvp.Value)
-                    Next
-
 
 
             ' 電話認証
@@ -292,6 +273,7 @@ Public Class MainForm
                     parameter("ctl00$ctl00$MainContent$TopContent$ibtNext.y") = "0"
 
                     nextUrl = UrlParserHelper.GetBaseDirUrl(httpClient.GetLastUrl()) & HtmlParserHelper.GetHtmlValue(html, "form", "id", "sitemaster", "action")
+
 
                     Dim tel As String = HtmlParserHelper.GetHtmlInnerText(html, "span", "id", "MainContent_TopContent_labTelNumber")
 
@@ -346,11 +328,28 @@ Public Class MainForm
 
                     Return 0
 
+                                ' ログインフォーム
+                Case html.Contains("ログインが必要です")
+
+                    parameter("__LASTFOCUS") = ""
+                    parameter("__EVENTTARGET") = ""
+                    parameter("__EVENTARGUMENT") = ""
+                    parameter("__VIEWSTATE") = HtmlParserHelper.GetHtmlValue(html, "input", "name", "__VIEWSTATE", "value")
+                    parameter("__VIEWSTATEGENERATOR") = HtmlParserHelper.GetHtmlValue(html, "input", "name", "__VIEWSTATEGENERATOR", "value")
+                    parameter("ctl00$MainContent$loginNameControl$txtLoginName") = account.Id
+                    parameter("ctl00$MainContent$passwordControl$txtPassword") = account.Password
+                    parameter("ctl00$MainContent$OTPControl$inputOTP") = ""
+                    parameter("ctl00$MainContent$btNext1") = ""
+
+                    nextUrl = UrlParserHelper.GetBaseDirUrl(httpClient.GetLastUrl()) & HtmlParserHelper.GetHtmlValue(html, "form", "id", "sitemaster", "action")
+
                 Case Else
                     Clipboard.SetText(html)
                     MessageBox.Show($"エラー : ページの解析に失敗しましたにゃ!!{vbCrLf}解析に失敗したページをクリップボードに出力しましたにゃ!!{vbCrLf}GetLastUrl={httpClient.GetLastUrl()}")
                     Return 0
             End Select
+
+            Await Task.Delay(200)
 
         Next
 
@@ -590,7 +589,7 @@ Public Class MainForm
         webClient.SetUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) NekoBrowser/1.0")
         webClient.SetEncoding(Encoding.GetEncoding("Shift_JIS"))
 
-        Dim nextUrl As String = $"{URL_RO_TOOL}?ReturnUrl={URL_RO_TOOL}"
+        Dim nextUrl As String = $"{URL_RO_LOGIN}?ReturnUrl={URL_RO_TOOL}"
 
         Try
             html = Await webClient.GetAsync(nextUrl)
@@ -614,7 +613,7 @@ Public Class MainForm
             <input type=""hidden"" name=""__VIEWSTATE"" value=""{HtmlParserHelper.GetHtmlValue(html, "input", "name", "__VIEWSTATE", "value")}""/>
             <input type=""hidden"" name=""__VIEWSTATEGENERATOR"" value=""{HtmlParserHelper.GetHtmlValue(html, "input", "name", "__VIEWSTATEGENERATOR", "value")}""/>
             <input type=""hidden"" name=""ctl00$ctl00$MainContent$TopContent$loginNameControl$txtLoginName"" value=""{loginAccounts.FirstOrDefault(Function(n) n.Id.ToString() = selectedAccount).Id}""/>
-            <input type=""hidden"" name=""ctl00$ctl00$MainContent$TopContent$passwordControl$txtPassword"" value=""{loginAccounts.FirstOrDefault(Function(n) n.Id.ToString() = selectedAccount).Passwd}""/>
+            <input type=""hidden"" name=""ctl00$ctl00$MainContent$TopContent$passwordControl$txtPassword"" value=""{loginAccounts.FirstOrDefault(Function(n) n.Id.ToString() = selectedAccount).Password}""/>
             <input type=""hidden"" name=""ctl00$ctl00$MainContent$TopContent$OTPControl$inputOTP"" value=""""/>
             <input type=""hidden"" name=""ctl00$ctl00$MainContent$TopContent$login"" value="""" />
         </form>
@@ -720,7 +719,7 @@ Public Class MainForm
             <input type=""hidden"" name=""__VIEWSTATE"" value=""{HtmlParserHelper.GetHtmlValue(html, "input", "name", "__VIEWSTATE", "value")}""/>
             <input type=""hidden"" name=""__VIEWSTATEGENERATOR"" value=""{HtmlParserHelper.GetHtmlValue(html, "input", "name", "__VIEWSTATEGENERATOR", "value")}""/>
             <input type=""hidden"" name=""ctl00$MainContent$loginNameControl$txtLoginName"" value=""{loginAccounts.FirstOrDefault(Function(n) n.Id.ToString() = selectedAccount).Id}""/>
-            <input type=""hidden"" name=""ctl00$MainContent$passwordControl$txtPassword"" value=""{loginAccounts.FirstOrDefault(Function(n) n.Id.ToString() = selectedAccount).Passwd}""/>
+            <input type=""hidden"" name=""ctl00$MainContent$passwordControl$txtPassword"" value=""{loginAccounts.FirstOrDefault(Function(n) n.Id.ToString() = selectedAccount).Password}""/>
             <input type=""hidden"" name=""ctl00$MainContent$OTPControl$inputOTP"" value=""""/>
             <input type=""hidden"" name=""ctl00$MainContent$btNext1"" value="""" />
         </form>

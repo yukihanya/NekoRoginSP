@@ -3,6 +3,7 @@ Imports System.Net.Http
 Imports System.Runtime.Remoting.Contexts
 Imports System.Security.Policy
 Imports System.Text
+Imports System.Web
 
 ' HTTPリクエストを簡単に扱うためのヘルパークラスにゃ
 Public Class HttpClientHelper
@@ -48,12 +49,19 @@ Public Class HttpClientHelper
 
     ' POSTリクエスト
     Public Async Function PostAsync(ByVal url As String, ByVal data As Dictionary(Of String, String)) As Task(Of String)
+        Dim enc As Encoding = responseEncoding
+
         Dim formBody As New List(Of String)
         For Each kvp In data
-            formBody.Add($"{kvp.Key}={kvp.Value}")
+            Dim encodedKey = EncodeSJIS(kvp.Key, enc)
+            Dim encodedValue = EncodeSJIS(kvp.Value, enc)
+            formBody.Add($"{encodedKey}={encodedValue}")
         Next
+
         Dim rawData = String.Join("&", formBody)
-        Dim content = New StringContent(rawData, responseEncoding, "application/x-www-form-urlencoded")
+        Dim content = New ByteArrayContent(enc.GetBytes(rawData))
+        content.Headers.ContentType = New Headers.MediaTypeHeaderValue("application/x-www-form-urlencoded")
+        content.Headers.ContentType.CharSet = enc.WebName
 
         Dim response = Await client.PostAsync(url, content)
         lastUrl = response.RequestMessage.RequestUri.ToString()
@@ -63,8 +71,8 @@ Public Class HttpClientHelper
 
         Dim bytes = Await response.Content.ReadAsByteArrayAsync()
         Return responseEncoding.GetString(bytes)
-
     End Function
+
 
     ' 画像の取得（Imageオブジェクトとして）
     Public Async Function GetImageAsync(ByVal url As String) As Task(Of Image)
@@ -103,10 +111,43 @@ Public Class HttpClientHelper
         handler.CookieContainer = cookieContainer
     End Sub
 
+    Public Sub RemoveExpiredCookies()
+        Dim newContainer As New CookieContainer()
+
+        ' CookieContainer からすべての Cookie を取得してコピーするにゃ（有効なものだけ）
+        Dim domainField = GetType(CookieContainer).GetField("m_domainTable", Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.Instance)
+        Dim domains = CType(domainField.GetValue(cookieContainer), IDictionary)
+
+        For Each key As String In domains.Keys
+            Dim domain = key.TrimStart("."c)
+            Dim uri As New Uri("http://" & domain)
+
+            For Each cookie As Cookie In cookieContainer.GetCookies(uri)
+                If cookie.Expires = DateTime.MinValue OrElse cookie.Expires > DateTime.Now Then
+                    newContainer.Add(uri, cookie)
+                End If
+            Next
+        Next
+
+        cookieContainer = newContainer
+        handler.CookieContainer = cookieContainer
+    End Sub
+
     ' ユーザーエージェントを設定するにゃ
     Public Sub SetUserAgent(ByVal userAgent As String)
         client.DefaultRequestHeaders.UserAgent.Clear()
         client.DefaultRequestHeaders.UserAgent.ParseAdd(userAgent)
     End Sub
+
+    Public Sub SetHeader(name As String, value As String)
+        If client.DefaultRequestHeaders.Contains(name) Then
+            client.DefaultRequestHeaders.Remove(name)
+        End If
+        client.DefaultRequestHeaders.Add(name, value)
+    End Sub
+
+    Private Function EncodeSJIS(value As String, enc As Encoding) As String
+        Return String.Join("", enc.GetBytes(value).Select(Function(b) "%" & b.ToString("X2")))
+    End Function
 
 End Class
