@@ -24,7 +24,7 @@
  ショートカットキーを有効にするとAlt+1～9で対応した位置のIDでゲームを起動できます。 <br />
 <br />
 🐾 つくったねこ🐈️<br />
- yukihanya@miru<br />
+ yukihana@miru<br />
  Discord: yukihanya<br />
  Web: https://neko.la/<br />
  GitHub: https://github.com/yukihanya/NekoRoginSP<br />

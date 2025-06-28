@@ -922,7 +922,6 @@ Public Class MainForm
         End If
         MenuOption_HotKey.Checked = Not MenuOption_HotKey.Checked
 
-
     End Sub
 
 End Class
