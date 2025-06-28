@@ -13,7 +13,7 @@ Imports System.Runtime.InteropServices
 <Assembly: AssemblyDescription("ねこアプリケーション")>
 <Assembly: AssemblyCompany("お砂糖とミルクとこねこ*")>
 <Assembly: AssemblyProduct("NekoRoginSP")>
-<Assembly: AssemblyCopyright("Copyright © 2025 yukihana@miru")>
+<Assembly: AssemblyCopyright("Copyright © 2025 yukihanya@miru")>
 <Assembly: AssemblyTrademark("")>
 
 <Assembly: ComVisible(False)>
@@ -29,6 +29,6 @@ Imports System.Runtime.InteropServices
 '      Revision
 '
 
-<Assembly: AssemblyVersion("1.0.0.0")>
-<Assembly: AssemblyFileVersion("1.0.0.0")>
+<Assembly: AssemblyVersion("1.0.1.0")>
+<Assembly: AssemblyFileVersion("1.0.1.0")>
 <Assembly: NeutralResourcesLanguage("")>

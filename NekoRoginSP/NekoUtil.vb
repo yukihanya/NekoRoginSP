@@ -1,11 +1,12 @@
 ﻿Imports System.IO
+Imports System.Runtime.InteropServices
 Imports System.Text
 Imports System.Text.RegularExpressions
 Imports Microsoft.Win32
 
-Module NekoHelper
-    ' ヘルパー関数
-    Public Class Base64EncodeHelper
+Module NekoUtil
+    ' ねこユーティリティクラス達
+    Public Class Base64EncodeUtil
 
         ' Base64エンコード関数にゃ
         Public Shared Function Base64Encode(input As String) As String
@@ -21,7 +22,7 @@ Module NekoHelper
 
     End Class
 
-    Public Class UrlEncodeHelper
+    Public Class UrlEncodeUtil
 
         ' URLエンコードを実装するにゃ
         Public Shared Function UrlEncodeSjis(ByVal input As String) As String
@@ -65,7 +66,7 @@ Module NekoHelper
     End Class
 
 
-    Public Class HtmlParserHelper
+    Public Class HtmlParserUtil
 
 
         ' HTMLから特定のタグの属性値を取得するにゃ
@@ -102,7 +103,7 @@ Module NekoHelper
     End Class
 
 
-    Public Class UrlParserHelper
+    Public Class UrlParserUtil
 
         ' URLからベースURLを取得するにゃ
         Public Shared Function GetBaseDirUrl(ByVal fullUrl As String) As String
@@ -136,7 +137,12 @@ Module NekoHelper
     End Class
 
 
-    Public Class Win32Helper
+    Public Class Win32Util
+
+
+        <DllImport("user32.dll", SetLastError:=True, CharSet:=CharSet.Auto)>
+        Private Shared Function FindWindow(lpClassName As String, lpWindowName As String) As IntPtr
+        End Function
 
         ' レジストリの既定値を取得するにゃ
         Public Shared Function GetRegistryValue(fullPath As String, valueName As String) As String
@@ -160,7 +166,7 @@ Module NekoHelper
                 rootKeyStr = "HKEY_CURRENT_CONFIG"
                 subKeyPath = fullPath.Substring("HKEY_CURRENT_CONFIG\".Length)
             Else
-                MessageBox.Show($"不明なルートキーにゃ : {fullPath}")
+                MessageBox.Show($"不明なルートキー : {fullPath}")
                 Return Nothing
             End If
 
@@ -187,14 +193,14 @@ Module NekoHelper
                         If val IsNot Nothing Then
                             Return val.ToString()
                         Else
-                            MessageBox.Show($"値が見つからなかったにゃ!! : {valueName}")
+                            MessageBox.Show($"値が見つからなかった!! : {valueName}")
                         End If
                     Else
-                        MessageBox.Show($"サブキーが見つからないにゃ!! : {subKeyPath}")
+                        MessageBox.Show($"サブキーが見つからない!! : {subKeyPath}")
                     End If
                 End Using
             Catch ex As Exception
-                MessageBox.Show($"エラーにゃ!! : {ex.Message}")
+                MessageBox.Show($"エラー!! : {ex.Message}")
             End Try
 
             Return Nothing
@@ -210,9 +216,19 @@ Module NekoHelper
                     .UseShellExecute = True
                 })
             Else
-                MessageBox.Show($"ファイルが見つかりませんにゃ!! : {filePath}")
+                MessageBox.Show($"ファイルが見つかりません!! : {filePath}")
             End If
         End Sub
+
+        ''' <summary>
+        ''' 指定したウィンドウタイトルが存在するかを確認するにゃ
+        ''' </summary>
+        ''' <param name="windowTitle">探すウィンドウのタイトルにゃ</param>
+        ''' <returns>存在すればTrue、なければFalseにゃ</returns>
+        Public Shared Function IsWindowTitleExists(windowTitle As String) As Boolean
+            Dim hWnd As IntPtr = FindWindow(Nothing, windowTitle)
+            Return hWnd <> IntPtr.Zero
+        End Function
 
     End Class
 

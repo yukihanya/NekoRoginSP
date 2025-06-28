@@ -1,9 +1,6 @@
 ﻿Imports System.Net
 Imports System.Net.Http
-Imports System.Runtime.Remoting.Contexts
-Imports System.Security.Policy
 Imports System.Text
-Imports System.Web
 
 ' HTTPリクエストを簡単に扱うためのヘルパークラスにゃ
 Public Class HttpClientHelper
@@ -40,7 +37,7 @@ Public Class HttpClientHelper
         Dim response = Await client.GetAsync(url)
         lastUrl = response.RequestMessage.RequestUri.ToString()
         If Not response.IsSuccessStatusCode Then
-            Throw New HttpRequestException($"GETエラーにゃ!! : {(CInt(response.StatusCode))} {response.ReasonPhrase}")
+            Throw New HttpRequestException($"GETエラー : {(CInt(response.StatusCode))} {response.ReasonPhrase}")
         End If
 
         Dim bytes = Await response.Content.ReadAsByteArrayAsync()
@@ -66,7 +63,7 @@ Public Class HttpClientHelper
         Dim response = Await client.PostAsync(url, content)
         lastUrl = response.RequestMessage.RequestUri.ToString()
         If Not response.IsSuccessStatusCode Then
-            Throw New HttpRequestException($"POSTエラーにゃ!! : {(CInt(response.StatusCode))} {response.ReasonPhrase}")
+            Throw New HttpRequestException($"POSTエラー : {(CInt(response.StatusCode))} {response.ReasonPhrase}")
         End If
 
         Dim bytes = Await response.Content.ReadAsByteArrayAsync()
@@ -79,7 +76,7 @@ Public Class HttpClientHelper
         Dim response = Await client.GetAsync(url)
         'lastUrl = response.RequestMessage.RequestUri.ToString()
         If Not response.IsSuccessStatusCode Then
-            Throw New HttpRequestException($"画像取得エラーにゃ!! : {(CInt(response.StatusCode))} {response.ReasonPhrase}")
+            Throw New HttpRequestException($"画像取得エラー : {(CInt(response.StatusCode))} {response.ReasonPhrase}")
         End If
         Using stream As IO.Stream = Await response.Content.ReadAsStreamAsync()
             Return Image.FromStream(stream)

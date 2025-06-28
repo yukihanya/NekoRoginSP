@@ -1,4 +1,6 @@
 ﻿
+Imports NekoRoginSP.AccountSaveData
+
 Public Class AuthForm
 
     Private Sub OK_Button_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles OK_Button.Click
@@ -11,23 +13,23 @@ Public Class AuthForm
                 id = Text_Id.Text
                 passwd = Text_Passwd.Text
 
-                If loginAccounts.Any(Function(n) n.Id = id) Then
-                    MessageBox.Show($"エラー : 既に登録されているガンホーIDですにゃ!!{vbCrLf}id={id}")
+                If MainForm.loginAccounts.Accounts.Any(Function(n) n.Id = id) Then
+                    MessageBox.Show($"エラー : 既に登録されているガンホーIDです!!{vbCrLf}id={id}")
                     Exit Select
                 End If
 
-                loginAccounts.Add(New Account With {.Id = id, .Password = passwd})
+                MainForm.loginAccounts.Accounts.Add(New Account With {.Id = id, .Password = passwd})
 
             Case "アカウント修正"
                 id = Text_Id.Text
                 passwd = Text_Passwd.Text
 
-                If MainForm.selectedAccount <> id And loginAccounts.Any(Function(n) n.Id = id) Then
-                    MessageBox.Show($"エラー : 既に登録されているガンホーIDですにゃ!!{vbCrLf}id={id}")
+                If MainForm.selectedAccount <> id AndAlso MainForm.loginAccounts.Accounts.Any(Function(n) n.Id = id) Then
+                    MessageBox.Show($"エラー : 既に登録されているガンホーIDです!!{vbCrLf}id={id}")
                     Exit Select
                 End If
 
-                With loginAccounts.FirstOrDefault(Function(n) n.Id.ToString() = MainForm.selectedAccount)
+                With MainForm.loginAccounts.Accounts.FirstOrDefault(Function(n) n.Id.ToString() = MainForm.selectedAccount)
                     .Id = id
                     .Password = passwd
                 End With

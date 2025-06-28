@@ -37,6 +37,7 @@ Partial Class MainForm
         Me.MenuOption_ShellScreenShot = New System.Windows.Forms.ToolStripMenuItem()
         Me.MenuOption_ShellMusic = New System.Windows.Forms.ToolStripMenuItem()
         Me.MenuOption_MinimizeToTray = New System.Windows.Forms.ToolStripMenuItem()
+        Me.MenuOption_HotKey = New System.Windows.Forms.ToolStripMenuItem()
         Me.ToolStripSeparator2 = New System.Windows.Forms.ToolStripSeparator()
         Me.MenuOption_About = New System.Windows.Forms.ToolStripMenuItem()
         Me.ToolStripSeparator3 = New System.Windows.Forms.ToolStripSeparator()
@@ -123,9 +124,9 @@ Partial Class MainForm
         '
         'MenuOption
         '
-        Me.MenuOption.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.MenuOption_Setup, Me.MenuOption_Shell, Me.MenuOption_MinimizeToTray, Me.ToolStripSeparator2, Me.MenuOption_About, Me.ToolStripSeparator3, Me.MenuOption_Quit})
+        Me.MenuOption.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.MenuOption_Setup, Me.MenuOption_Shell, Me.MenuOption_MinimizeToTray, Me.MenuOption_HotKey, Me.ToolStripSeparator2, Me.MenuOption_About, Me.ToolStripSeparator3, Me.MenuOption_Quit})
         Me.MenuOption.Name = "MenuOption"
-        Me.MenuOption.Size = New System.Drawing.Size(237, 136)
+        Me.MenuOption.Size = New System.Drawing.Size(237, 160)
         Me.MenuOption.Tag = ""
         '
         'MenuOption_Setup
@@ -168,6 +169,12 @@ Partial Class MainForm
         Me.MenuOption_MinimizeToTray.Name = "MenuOption_MinimizeToTray"
         Me.MenuOption_MinimizeToTray.Size = New System.Drawing.Size(236, 24)
         Me.MenuOption_MinimizeToTray.Text = "最小化時にタスクトレイに格納する"
+        '
+        'MenuOption_HotKey
+        '
+        Me.MenuOption_HotKey.Name = "MenuOption_HotKey"
+        Me.MenuOption_HotKey.Size = New System.Drawing.Size(236, 24)
+        Me.MenuOption_HotKey.Text = "ショートカットキーを有効にする"
         '
         'ToolStripSeparator2
         '
@@ -307,4 +314,5 @@ Partial Class MainForm
     Friend WithEvents MenuOption_ShellMusic As ToolStripMenuItem
     Friend WithEvents MenuTasktray As ContextMenuStrip
     Friend WithEvents TasktrayIcon As NotifyIcon
+    Friend WithEvents MenuOption_HotKey As ToolStripMenuItem
 End Class
