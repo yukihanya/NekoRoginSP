@@ -25,7 +25,7 @@ Module NekoUtil
     Public Class UrlEncodeUtil
 
         ' URLエンコードを実装するにゃ
-        Public Shared Function UrlEncodeSjis(ByVal input As String) As String
+        Public Shared Function UrlEncodeSjis(input As String) As String
             Dim sjis As Encoding = Encoding.GetEncoding("Shift_JIS")
             Dim bytes() As Byte = sjis.GetBytes(input)
             Dim sb As New StringBuilder()
@@ -45,7 +45,7 @@ Module NekoUtil
             Return sb.ToString()
         End Function
 
-        Public Shared Function UrlEncodeUtf8(ByVal input As String) As String
+        Public Shared Function UrlEncodeUtf8(input As String) As String
             Dim sb As New StringBuilder()
             For Each c As Char In input
                 If (AscW(c) >= 48 AndAlso AscW(c) <= 57) OrElse ' 0-9
@@ -70,7 +70,7 @@ Module NekoUtil
 
 
         ' HTMLから特定のタグの属性値を取得するにゃ
-        Public Shared Function GetHtmlValue(ByVal source As String, ByVal tag As String, ByVal attrKey As String, ByVal attrValue As String, ByVal returnAttr As String) As String
+        Public Shared Function GetHtmlValue(source As String, tag As String, attrKey As String, attrValue As String, returnAttr As String) As String
             ' タグの中で、attrKey=attrValue となっているものを探すにゃ
             ' attrKeyとreturnAttrの順番が入れ替わってもOKにゃ
             Dim pattern1 As String = $"<\s*{tag}[^>]*\b{attrKey}\s*=\s*""{Regex.Escape(attrValue)}""[^>]*?\b{returnAttr}\s*=\s*""([^""]*)"""
@@ -89,7 +89,7 @@ Module NekoUtil
         End Function
 
         ' 特定のタグの中身を取得するにゃ
-        Public Shared Function GetHtmlInnerText(ByVal source As String, ByVal tag As String, ByVal attrKey As String, ByVal attrValue As String) As String
+        Public Shared Function GetHtmlInnerText(source As String, tag As String, attrKey As String, attrValue As String) As String
             ' 正規表現でタグと属性を指定して中身を取得するにゃ
             Dim pattern As String = $"<{tag}[^>]*\b{attrKey}=""{Regex.Escape(attrValue)}""[^>]*>(.*?)</{tag}>"
             Dim match As Match = Regex.Match(source, pattern, RegexOptions.IgnoreCase Or RegexOptions.Singleline)
@@ -106,7 +106,7 @@ Module NekoUtil
     Public Class UrlParserUtil
 
         ' URLからベースURLを取得するにゃ
-        Public Shared Function GetBaseDirUrl(ByVal fullUrl As String) As String
+        Public Shared Function GetBaseDirUrl(fullUrl As String) As String
             Try
                 ' Uriクラスを使ってパースするにゃ
                 Dim uri As New Uri(fullUrl)
@@ -124,7 +124,7 @@ Module NekoUtil
             End Try
         End Function
 
-        Public Shared Function GetBaseDomainUrl(ByVal fullUrl As String) As String
+        Public Shared Function GetBaseDomainUrl(fullUrl As String) As String
             Try
                 Dim uri As New Uri(fullUrl)
                 Return uri.Scheme & "://" & uri.Host & "/"

@@ -25,7 +25,7 @@ Public Class HttpClientHelper
     End Sub
 
     ' エンコーディングを設定するにゃ
-    Public Sub SetEncoding(ByVal enc As Encoding)
+    Public Sub SetEncoding(enc As Encoding)
         responseEncoding = enc
     End Sub
     ' 最後のURLを取得するにゃ
@@ -33,7 +33,7 @@ Public Class HttpClientHelper
         Return lastUrl
     End Function
     ' GETリクエスト
-    Public Async Function GetAsync(ByVal url As String) As Task(Of String)
+    Public Async Function GetAsync(url As String) As Task(Of String)
         Dim response = Await client.GetAsync(url)
         lastUrl = response.RequestMessage.RequestUri.ToString()
         If Not response.IsSuccessStatusCode Then
@@ -45,7 +45,7 @@ Public Class HttpClientHelper
     End Function
 
     ' POSTリクエスト
-    Public Async Function PostAsync(ByVal url As String, ByVal data As Dictionary(Of String, String)) As Task(Of String)
+    Public Async Function PostAsync(url As String, data As Dictionary(Of String, String)) As Task(Of String)
         Dim enc As Encoding = responseEncoding
 
         Dim formBody As New List(Of String)
@@ -72,7 +72,7 @@ Public Class HttpClientHelper
 
 
     ' 画像の取得（Imageオブジェクトとして）
-    Public Async Function GetImageAsync(ByVal url As String) As Task(Of Image)
+    Public Async Function GetImageAsync(url As String) As Task(Of Image)
         Dim response = Await client.GetAsync(url)
         'lastUrl = response.RequestMessage.RequestUri.ToString()
         If Not response.IsSuccessStatusCode Then
@@ -84,7 +84,7 @@ Public Class HttpClientHelper
     End Function
 
     ' Cookieをセットするにゃ
-    Public Sub SetCookies(ByVal url As String, ByVal cookies As Dictionary(Of String, String))
+    Public Sub SetCookies(url As String, cookies As Dictionary(Of String, String))
         Dim uri = New Uri(url)
         For Each kvp In cookies
             Dim cookie = New Cookie(kvp.Key, kvp.Value)
@@ -93,7 +93,7 @@ Public Class HttpClientHelper
     End Sub
 
     ' Cookieを取得するにゃ
-    Public Function GetCookies(ByVal url As String) As Dictionary(Of String, String)
+    Public Function GetCookies(url As String) As Dictionary(Of String, String)
         Dim uri = New Uri(url)
         Dim cookieCol = cookieContainer.GetCookies(uri)
         Dim dict As New Dictionary(Of String, String)
@@ -131,7 +131,7 @@ Public Class HttpClientHelper
     End Sub
 
     ' ユーザーエージェントを設定するにゃ
-    Public Sub SetUserAgent(ByVal userAgent As String)
+    Public Sub SetUserAgent(userAgent As String)
         client.DefaultRequestHeaders.UserAgent.Clear()
         client.DefaultRequestHeaders.UserAgent.ParseAdd(userAgent)
     End Sub

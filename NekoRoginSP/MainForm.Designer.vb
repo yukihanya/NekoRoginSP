@@ -52,6 +52,7 @@ Partial Class MainForm
         Me.MenuAccount_Remove = New System.Windows.Forms.ToolStripMenuItem()
         Me.MenuTasktray = New System.Windows.Forms.ContextMenuStrip(Me.components)
         Me.TasktrayIcon = New System.Windows.Forms.NotifyIcon(Me.components)
+        Me.不要な時はパッチクライアントをスキップするToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
         Me.MenuOption.SuspendLayout()
         Me.MenuInfo.SuspendLayout()
         Me.MenuAccount.SuspendLayout()
@@ -124,9 +125,9 @@ Partial Class MainForm
         '
         'MenuOption
         '
-        Me.MenuOption.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.MenuOption_Setup, Me.MenuOption_Shell, Me.MenuOption_MinimizeToTray, Me.MenuOption_HotKey, Me.ToolStripSeparator2, Me.MenuOption_About, Me.ToolStripSeparator3, Me.MenuOption_Quit})
+        Me.MenuOption.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.MenuOption_Setup, Me.MenuOption_Shell, Me.MenuOption_HotKey, Me.MenuOption_MinimizeToTray, Me.不要な時はパッチクライアントをスキップするToolStripMenuItem, Me.ToolStripSeparator2, Me.MenuOption_About, Me.ToolStripSeparator3, Me.MenuOption_Quit})
         Me.MenuOption.Name = "MenuOption"
-        Me.MenuOption.Size = New System.Drawing.Size(237, 160)
+        Me.MenuOption.Size = New System.Drawing.Size(273, 206)
         Me.MenuOption.Tag = ""
         '
         'MenuOption_Setup
@@ -264,6 +265,12 @@ Partial Class MainForm
         Me.TasktrayIcon.Text = "NekoRoginSP"
         Me.TasktrayIcon.Visible = True
         '
+        '不要な時はパッチクライアントをスキップするToolStripMenuItem
+        '
+        Me.不要な時はパッチクライアントをスキップするToolStripMenuItem.Name = "不要な時はパッチクライアントをスキップするToolStripMenuItem"
+        Me.不要な時はパッチクライアントをスキップするToolStripMenuItem.Size = New System.Drawing.Size(272, 24)
+        Me.不要な時はパッチクライアントをスキップするToolStripMenuItem.Text = "不要な時はパッチクライアントをスキップする"
+        '
         'MainForm
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 12.0!)
@@ -315,4 +322,5 @@ Partial Class MainForm
     Friend WithEvents MenuTasktray As ContextMenuStrip
     Friend WithEvents TasktrayIcon As NotifyIcon
     Friend WithEvents MenuOption_HotKey As ToolStripMenuItem
+    Friend WithEvents 不要な時はパッチクライアントをスキップするToolStripMenuItem As ToolStripMenuItem
 End Class

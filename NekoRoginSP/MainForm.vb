@@ -72,6 +72,10 @@ Public Class MainForm
         End If
 
     End Sub
+
+    Private Function GetRoPath() As String
+
+    End Function
     Private Async Function Login() As Task(Of Integer)
 
         Dim html As String = ""
@@ -414,7 +418,6 @@ Public Class MainForm
 
     End Function
 
-
     Private Sub MainForm_Load(sender As Object, e As EventArgs) Handles MyBase.Load
 
         httpClient.SetUserAgent(HTTP_USER_AGENT)
@@ -501,11 +504,10 @@ Public Class MainForm
 
     End Sub
 
+
     Private Async Sub Button_Play_Click(sender As Object, e As EventArgs) Handles Button_Play.Click
 
         If Not Button_Play.Enabled Then Exit Sub
-
-
 
         Await List_Account_SelectedIndexChanged(List_Account, EventArgs.Empty)
 
@@ -515,6 +517,18 @@ Public Class MainForm
             MessageBox.Show("エラー : ゲームコードの取得に失敗しました!!")
             Exit Sub
         End If
+
+        Clipboard.SetText(code)
+
+        Dim roPath As String = Win32Util.GetRegistryValue("HKEY_CLASSES_ROOT\ROEXEURI\shell\open\command", Nothing)
+        If String.IsNullOrEmpty(roPath) Then
+            MessageBox.Show($"エラー : ROEXEURIのレジストリが見つかりません!!{vbCrLf}RagnarokOnlineのインストールを確認してください!!")
+            Exit Sub
+        End If
+
+        roPath = Path.GetDirectoryName(roPath.Replace("""%1""", "").Replace("""", ""))
+
+        'Win32Util.ShellExecute(Path.Combine(roPath, "Setup.exe"))
 
         Try
             Process.Start($"ROEXEURI://-w&""{code}""")
@@ -819,6 +833,9 @@ Public Class MainForm
                 menu.Items.Add(item)
             Next
             menu.Items.Add(New ToolStripSeparator())
+
+
+
 
             ' 既存メニューを追加
             MergeMenusWithHandler(menu, MenuOption, AddressOf CommonClickHandler)
